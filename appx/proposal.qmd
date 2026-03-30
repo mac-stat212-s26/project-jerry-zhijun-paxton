@@ -1,5 +1,131 @@
 ---
-title: "Proposal"
+title: "Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil"
+author:
+  - name: Zhijun He
+  - name: Jerry Miao
+  - name: Paxton Boyd
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: false
+    theme: cosmo
+    highlight-style: github
+    code-fold: true
+    code-tools: true
+    df-print: paged
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
-Your proposal go here.
+## Project Description
+
+Brazil's official firm-size classification (Simples Nacional) sorts registered companies into micro, small, and medium/large tiers based on annual gross revenue. But revenue is a poor proxy for capital endowment. A sole proprietor earning 360,000 BRL per year is legally a "micro-enterprise" regardless of whether they hold 10,000 BRL or 10,000,000 BRL in declared capital stock. This creates a classification paradox: the same regulatory label encompasses both subsistence operations and well-capitalized investment vehicles.
+
+This project uses Brazil's CNPJ business registry — a near-census of all registered firms — to expose the internal heterogeneity that aggregate size categories conceal. We focus on two orthogonal dimensions that revenue-based classification ignores: **within-tier capital inequality** and **governance structure** (the legal role of the controlling owner). Our central argument is that "micro-enterprise" is not a coherent economic category but a regulatory label that shelters firms with vastly different capital endowments under the same umbrella — with direct implications for how development policy should target capital support.
+
+---
+
+## Research Questions
+
+1. **Within-tier inequality:** Are micro-enterprises themselves internally unequal in capital endowments, or does the category represent a relatively flat distribution? How does within-tier inequality (measured by Gini coefficient) compare across size classifications?
+
+2. **Governance as a capital predictor:** Does owner qualification — Managing Partner, Beneficial Owner, or Sole Entrepreneur — predict capital accumulation independently of firm size? Does a governance premium persist even within the same regulatory tier, and if so, by how much?
+
+3. **The "capital-rich micro":** Among micro-enterprises with unusually high declared capital stock, what combinations of legal form and governance archetype distinguish them from the capital-poor majority? What does this imply for how development programs should identify genuinely capital-constrained firms?
+
+---
+
+## Dataset
+
+**Brazilian Companies (CNPJ) — TidyTuesday 2026, Week 4**
+
+The dataset is drawn from Brazil's *Cadastro Nacional da Pessoa Jurídica* (CNPJ), the federal business registry administered by the Receita Federal (Federal Revenue Service). It contains registration records for firms across Brazil with the following key variables:
+
+| Variable | Type | Description |
+|---|---|---|
+| `capital_social` | Numeric (BRL) | Declared capital stock at registration |
+| `porte_empresa` | Categorical | Firm size tier under Simples Nacional (Micro, Small, Medium/Large) |
+| `natureza_juridica` | Categorical | Legal form (LLC, sole proprietorship, EIRELI, etc.) |
+| `owner_qualification` | Categorical | Legal role of controlling owner (Managing Partner, Beneficial Owner, Sole Entrepreneur, Other) |
+| `municipio` | Categorical | Municipality of registration |
+| `cnae_fiscal` | Categorical | Primary sector code (CNAE classification) |
+
+The working subset used in this project contains **141,332 observations** after standard cleaning (removal of records with missing or zero capital stock, harmonization of legal-form codes). Capital stock is right-skewed and will be log-transformed for distributional analysis. The `owner_qualification` field is recoded into four governance archetypes: Managing Partner / Administrator, Sole Entrepreneur, Beneficial Owner (passive/investor), and Other.
+
+The dataset is publicly available via the [TidyTuesday GitHub repository](https://github.com/rfordatascience/tidytuesday) and requires no restricted access or IRB approval.
+
+---
+
+## Inspiration
+
+This project grew out of a prior TidyTuesday analysis that identified a macro-level capital paradox: micro-enterprises constitute the majority of registered Brazilian firms yet control a disproportionately small share of total capital stock. That finding raises a harder question — is this gap primarily *between* size tiers, *within* them, or both simultaneously?
+
+The answer matters for development policy. If the capital deficit is concentrated among a genuine subset of micro-enterprises while others are actually well-capitalized holding-company subsidiaries registered as "micro" because their revenue falls below the Simples Nacional threshold, then blanket micro-enterprise subsidies are a blunt and potentially misdirected instrument. This project is motivated by the broader development economics question of *when categorical targeting works and when it fails* — a question with relevance well beyond Brazil, extending to informal economy support programs across Sub-Saharan Africa, South Asia, and Latin America.
+
+---
+
+## Communication Plan
+
+- **Primary channel:** Google group chat (backup: email)
+- **Expected response time:** Within 24 hours on weekdays; best-effort on weekends
+- **Standing meeting:** Wednesdays, 7:00–8:00 PM (location: TBD or Zoom)
+- **Async coordination:** GitHub Issues and pull request comments for all code-related decisions; brief meeting notes shared in group chat after each session
+- **Milestone check-ins:** 48-hour heads-up in group chat before any submission deadline
+
+---
+
+## Roles
+
+All team members are expected to contribute substantively to analysis, writing, and visualization. Leads exist for accountability, not sole ownership.
+
+| Role | Person | Responsibilities |
+|---|---|---|
+| **Point of Contact** | Zhijun He | Primary email contact with instructor and preceptors; represents team in official communications; coordinates submission logistics |
+| **Technical Lead** | Jerry Miao | Oversees GitHub repository structure; reviews and merges pull requests; maintains the Quarto website; ensures full reproducibility of the pipeline |
+| **Style Lead** | Paxton Boyd | Enforces the COMP/STAT 112/212 Code Styling Guide across all `.qmd` and `.R` files; reviews all code before submission milestones |
+
+---
+
+## Conflict Resolution
+
+**Missed internal deadlines:** If a team member anticipates missing an internal deadline, they notify the group chat at least 24 hours in advance with a revised timeline. The team redistributes the task for the current milestone; the member makes up the contribution before the next deliverable. Repeated missed deadlines — defined as two or more without prior notice — are escalated to the instructor following a team conversation.
+
+**Disagreements (50/50 split):** Each side presents their case for up to five minutes, then the team votes again. If still tied:
+
+- **Code and methodology questions** → Technical Lead (Jerry Miao) has the deciding vote.
+- **Framing, writing, and communication questions** → Point of Contact (Zhijun He) has the deciding vote.
+
+If the disagreement is substantive enough that neither tie-breaker feels appropriate, we consult the instructor or a preceptor before the next deadline.
+
+**General norm:** Raise concerns early and in the group chat — not in GitHub comments or after a milestone has been submitted.
+
+---
+
+## Implementation Plan
+
+The following tasks are to be posted as individual GitHub Issues in the project repository, tagged with their corresponding milestone label and assignee(s). Dates assume a Week 1 start of **February 24, 2026**.
+
+| Issue | Task | Due Date | Lead |
+|---|---|---|---|
+| #1 | Initialize GitHub repo; set up Quarto site skeleton; add `proposal.qmd` template | Mar 1 | Jerry (Technical) |
+| #2 | Draft and submit Milestone 1 proposal; post GitHub Issues #3–#12 | Mar 7 | All (Zhijun submits) |
+| #3 | Data ingestion and cleaning: filter, recode `owner_qualification`, log-transform capital | Mar 12 | Jerry (Technical) |
+| #4 | Exploratory data analysis: distributions, missingness audit, outlier assessment | Mar 14 | All |
+| #5 | Build Visualization 1: Lorenz curves by firm size with Gini annotations | Mar 18 | Zhijun |
+| #6 | Build Visualization 2: Governance premium by size tier (boxplots or violin plots) | Mar 18 | Jerry |
+| #7 | Build Visualization 3: Capital-rich micro profile by legal form × governance | Mar 20 | Paxton |
+| #8 | Milestone 2: EDA write-up, narrative captions, and site integration | Mar 22 | All (Paxton style review) |
+| #9 | Regression / modeling: estimate governance premium controlling for size and sector | Apr 2 | Jerry |
+| #10 | Capital-rich micro analysis: logistic model or conditional means by archetype | Apr 4 | Zhijun |
+| #11 | Milestone 3: Analysis write-up draft; incorporate modeling results into narrative | Apr 10 | All (Paxton style review) |
+| #12 | Peer review incorporation and targeted revision | Apr 18 | Zhijun coordinates |
+| #13 | Final website polish: styling, accessibility, consistent theme | Apr 24 | Paxton + Jerry |
+| #14 | Milestone 4: Final submission; verify reproducibility end-to-end | Apr 27 | All (Zhijun submits) |
+| #15 | Presentation prep: slides or recorded walkthrough | Apr 27 | All |
+
+> **Note:** GitHub Issues should be created in the project repository with appropriate labels (`milestone-1`, `milestone-2`, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the **Mar 1** deadline.
