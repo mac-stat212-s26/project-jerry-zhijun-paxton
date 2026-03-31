@@ -1,0 +1,177 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Capital Without Category",
+    "section": "",
+    "text": "Welcome\nThis website presents our project on governance, inequality, and the micro-enterprise paradox in Brazil.\nUse the sidebar to navigate through our EDA, written analysis, and appendix materials.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Capital Without Category</span>"
+    ]
+  },
+  {
+    "objectID": "eda/eda-member1.html",
+    "href": "eda/eda-member1.html",
+    "title": "Member 1 First Name & Last Name Initial",
+    "section": "",
+    "text": "Your exploratory data analysis of the team datasets go here.",
+    "crumbs": [
+      "EDA",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Member 1 First Name & Last Name Initial</span>"
+    ]
+  },
+  {
+    "objectID": "eda/eda-member2.html",
+    "href": "eda/eda-member2.html",
+    "title": "Member 2 First Name & Last Name Initial",
+    "section": "",
+    "text": "Your exploratory data analysis of the team datasets go here.",
+    "crumbs": [
+      "EDA",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Member 2 First Name & Last Name Initial</span>"
+    ]
+  },
+  {
+    "objectID": "eda/eda-member3.html",
+    "href": "eda/eda-member3.html",
+    "title": "Member 3 First Name & Last Name Initial",
+    "section": "",
+    "text": "Your exploratory data analysis of the team datasets go here.",
+    "crumbs": [
+      "EDA",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Member 3 First Name & Last Name Initial</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html",
+    "href": "appx/proposal.html",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "",
+    "text": "Project Description\nBrazil’s official firm-size classification (Simples Nacional) sorts registered companies into micro, small, and medium/large tiers based on annual gross revenue. But revenue is a poor proxy for capital endowment. A sole proprietor earning 360,000 BRL per year is legally a “micro-enterprise” regardless of whether they hold 10,000 BRL or 10,000,000 BRL in declared capital stock. This creates a classification paradox: the same regulatory label encompasses both subsistence operations and well-capitalized investment vehicles.\nThis project uses Brazil’s CNPJ business registry — a near-census of all registered firms — to expose the internal heterogeneity that aggregate size categories conceal. We focus on two orthogonal dimensions that revenue-based classification ignores: within-tier capital inequality and governance structure (the legal role of the controlling owner). Our central argument is that “micro-enterprise” is not a coherent economic category but a regulatory label that shelters firms with vastly different capital endowments under the same umbrella — with direct implications for how development policy should target capital support.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#research-questions",
+    "href": "appx/proposal.html#research-questions",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Research Questions",
+    "text": "Research Questions\n\nWithin-tier inequality: Are micro-enterprises themselves internally unequal in capital endowments, or does the category represent a relatively flat distribution? How does within-tier inequality (measured by Gini coefficient) compare across size classifications?\nGovernance as a capital predictor: Does owner qualification — Managing Partner, Beneficial Owner, or Sole Entrepreneur — predict capital accumulation independently of firm size? Does a governance premium persist even within the same regulatory tier, and if so, by how much?\nThe “capital-rich micro”: Among micro-enterprises with unusually high declared capital stock, what combinations of legal form and governance archetype distinguish them from the capital-poor majority? What does this imply for how development programs should identify genuinely capital-constrained firms?",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#dataset",
+    "href": "appx/proposal.html#dataset",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Dataset",
+    "text": "Dataset\nBrazilian Companies (CNPJ) — TidyTuesday 2026, Week 4\nThe dataset is drawn from Brazil’s Cadastro Nacional da Pessoa Jurídica (CNPJ), the federal business registry administered by the Receita Federal (Federal Revenue Service). It contains registration records for firms across Brazil with the following key variables:\n\n\n\n\n\n\n\n\nVariable\nType\nDescription\n\n\n\n\ncapital_social\nNumeric (BRL)\nDeclared capital stock at registration\n\n\nporte_empresa\nCategorical\nFirm size tier under Simples Nacional (Micro, Small, Medium/Large)\n\n\nnatureza_juridica\nCategorical\nLegal form (LLC, sole proprietorship, EIRELI, etc.)\n\n\nowner_qualification\nCategorical\nLegal role of controlling owner (Managing Partner, Beneficial Owner, Sole Entrepreneur, Other)\n\n\nmunicipio\nCategorical\nMunicipality of registration\n\n\ncnae_fiscal\nCategorical\nPrimary sector code (CNAE classification)\n\n\n\nThe working subset used in this project contains 141,332 observations after standard cleaning (removal of records with missing or zero capital stock, harmonization of legal-form codes). Capital stock is right-skewed and will be log-transformed for distributional analysis. The owner_qualification field is recoded into four governance archetypes: Managing Partner / Administrator, Sole Entrepreneur, Beneficial Owner (passive/investor), and Other.\nThe dataset is publicly available via the TidyTuesday GitHub repository and requires no restricted access or IRB approval.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#inspiration",
+    "href": "appx/proposal.html#inspiration",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Inspiration",
+    "text": "Inspiration\nThis project grew out of a prior TidyTuesday analysis that identified a macro-level capital paradox: micro-enterprises constitute the majority of registered Brazilian firms yet control a disproportionately small share of total capital stock. That finding raises a harder question — is this gap primarily between size tiers, within them, or both simultaneously?\nThe answer matters for development policy. If the capital deficit is concentrated among a genuine subset of micro-enterprises while others are actually well-capitalized holding-company subsidiaries registered as “micro” because their revenue falls below the Simples Nacional threshold, then blanket micro-enterprise subsidies are a blunt and potentially misdirected instrument. This project is motivated by the broader development economics question of when categorical targeting works and when it fails — a question with relevance well beyond Brazil, extending to informal economy support programs across Sub-Saharan Africa, South Asia, and Latin America.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#communication-plan",
+    "href": "appx/proposal.html#communication-plan",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Communication Plan",
+    "text": "Communication Plan\n\nPrimary channel: Google group chat (backup: email)\nExpected response time: Within 24 hours on weekdays; best-effort on weekends\nStanding meeting: Wednesdays, 7:00–8:00 PM (location: TBD or Zoom)\nAsync coordination: GitHub Issues and pull request comments for all code-related decisions; brief meeting notes shared in group chat after each session\nMilestone check-ins: 48-hour heads-up in group chat before any submission deadline",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#roles",
+    "href": "appx/proposal.html#roles",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Roles",
+    "text": "Roles\nAll team members are expected to contribute substantively to analysis, writing, and visualization. Leads exist for accountability, not sole ownership.\n\n\n\n\n\n\n\n\nRole\nPerson\nResponsibilities\n\n\n\n\nPoint of Contact\nZhijun He\nPrimary email contact with instructor and preceptors; represents team in official communications; coordinates submission logistics\n\n\nTechnical Lead\nJerry Miao\nOversees GitHub repository structure; reviews and merges pull requests; maintains the Quarto website; ensures full reproducibility of the pipeline\n\n\nStyle Lead\nPaxton Boyd\nEnforces the COMP/STAT 112/212 Code Styling Guide across all .qmd and .R files; reviews all code before submission milestones",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#conflict-resolution",
+    "href": "appx/proposal.html#conflict-resolution",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Conflict Resolution",
+    "text": "Conflict Resolution\nMissed internal deadlines: If a team member anticipates missing an internal deadline, they notify the group chat at least 24 hours in advance with a revised timeline. The team redistributes the task for the current milestone; the member makes up the contribution before the next deliverable. Repeated missed deadlines — defined as two or more without prior notice — are escalated to the instructor following a team conversation.\nDisagreements (50/50 split): Each side presents their case for up to five minutes, then the team votes again. If still tied:\n\nCode and methodology questions → Technical Lead (Jerry Miao) has the deciding vote.\nFraming, writing, and communication questions → Point of Contact (Zhijun He) has the deciding vote.\n\nIf the disagreement is substantive enough that neither tie-breaker feels appropriate, we consult the instructor or a preceptor before the next deadline.\nGeneral norm: Raise concerns early and in the group chat — not in GitHub comments or after a milestone has been submitted.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/proposal.html#implementation-plan",
+    "href": "appx/proposal.html#implementation-plan",
+    "title": "Appendix A — Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil",
+    "section": "Implementation Plan",
+    "text": "Implementation Plan\nThe following tasks are to be posted as individual GitHub Issues in the project repository, tagged with their corresponding milestone label and assignee(s). Dates assume a Week 1 start of February 24, 2026.\n\n\n\n\n\n\n\n\n\nIssue\nTask\nDue Date\nLead\n\n\n\n\n#1\nInitialize GitHub repo; set up Quarto site skeleton; add proposal.qmd template\nMar 1\nJerry (Technical)\n\n\n#2\nDraft and submit Milestone 1 proposal; post GitHub Issues #3–#12\nMar 7\nAll (Zhijun submits)\n\n\n#3\nData ingestion and cleaning: filter, recode owner_qualification, log-transform capital\nMar 12\nJerry (Technical)\n\n\n#4\nExploratory data analysis: distributions, missingness audit, outlier assessment\nMar 14\nAll\n\n\n#5\nBuild Visualization 1: Lorenz curves by firm size with Gini annotations\nMar 18\nZhijun\n\n\n#6\nBuild Visualization 2: Governance premium by size tier (boxplots or violin plots)\nMar 18\nJerry\n\n\n#7\nBuild Visualization 3: Capital-rich micro profile by legal form × governance\nMar 20\nPaxton\n\n\n#8\nMilestone 2: EDA write-up, narrative captions, and site integration\nMar 22\nAll (Paxton style review)\n\n\n#9\nRegression / modeling: estimate governance premium controlling for size and sector\nApr 2\nJerry\n\n\n#10\nCapital-rich micro analysis: logistic model or conditional means by archetype\nApr 4\nZhijun\n\n\n#11\nMilestone 3: Analysis write-up draft; incorporate modeling results into narrative\nApr 10\nAll (Paxton style review)\n\n\n#12\nPeer review incorporation and targeted revision\nApr 18\nZhijun coordinates\n\n\n#13\nFinal website polish: styling, accessibility, consistent theme\nApr 24\nPaxton + Jerry\n\n\n#14\nMilestone 4: Final submission; verify reproducibility end-to-end\nApr 27\nAll (Zhijun submits)\n\n\n#15\nPresentation prep: slides or recorded walkthrough\nApr 27\nAll\n\n\n\n\nNote: GitHub Issues should be created in the project repository with appropriate labels (milestone-1, milestone-2, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the Mar 1 deadline.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>A</span>  <span class='chapter-title'>Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</span>"
+    ]
+  },
+  {
+    "objectID": "appx/case-study.html",
+    "href": "appx/case-study.html",
+    "title": "Appendix B — Case Study",
+    "section": "",
+    "text": "Your case study go here.",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Case Study</span>"
+    ]
+  },
+  {
+    "objectID": "wa/wa-member1.html",
+    "href": "wa/wa-member1.html",
+    "title": "Appendix C — Member 1 First Name & Last Name Initial",
+    "section": "",
+    "text": "Work area to try code",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>C</span>  <span class='chapter-title'>Member 1 First Name & Last Name Initial</span>"
+    ]
+  },
+  {
+    "objectID": "wa/wa-member2.html",
+    "href": "wa/wa-member2.html",
+    "title": "Appendix D — Member 2 First Name & Last Name Initial",
+    "section": "",
+    "text": "Work area to try code",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>D</span>  <span class='chapter-title'>Member 2 First Name & Last Name Initial</span>"
+    ]
+  },
+  {
+    "objectID": "wa/wa-member3.html",
+    "href": "wa/wa-member3.html",
+    "title": "Appendix E — Member 3 First Name & Last Name Initial",
+    "section": "",
+    "text": "Work area to try code",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>E</span>  <span class='chapter-title'>Member 3 First Name & Last Name Initial</span>"
+    ]
+  }
+]
