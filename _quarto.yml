@@ -23,7 +23,6 @@ book:
 
   chapters:
     - index.qmd
-
     - part: "EDA"
       chapters:
         - eda/eda-member1.qmd
