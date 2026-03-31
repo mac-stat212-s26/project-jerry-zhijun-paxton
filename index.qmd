@@ -1,10 +1,9 @@
 ---
-title: "Report"
+title: "Capital Without Category"
 ---
 
-Your report goes here.
+# Welcome
 
-```{r}
-# a test code chunk
-```
+This website presents our project on governance, inequality, and the micro-enterprise paradox in Brazil.
 
+Use the sidebar to navigate through our EDA, written analysis, and appendix materials.
