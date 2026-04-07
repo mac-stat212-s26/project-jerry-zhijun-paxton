@@ -31,14 +31,14 @@ execute:
 
 ## Background and Motivation
 
-Brazil's official firm-size classification (Simples Nacional) sorts registered companies into
+Brazil's official firm-size classification (Simples Nacional)(https://thebrazilbusiness.com/article/taxation-regime-simples-nacional) sorts registered companies into
 **micro**, **small**, and **medium/large** tiers based on annual gross revenue. But revenue is a
 poor proxy for capital endowment. A sole proprietor earning 360,000 BRL per year is legally a
 "micro-enterprise" regardless of whether they hold 10,000 BRL or 10,000,000 BRL in declared
 capital stock. This classification logic creates a structural paradox: the same regulatory label
 simultaneously shelters subsistence operations and well-capitalized investment vehicles.
 
-This project uses Brazil's CNPJ business registry — a near-census of all registered firms — to
+This project uses Brazil's CNPJ(Cadastro Nacional da Pessoa Jurídica -- National Registry of Legal Entities) business registry(https://dados.gov.br/dados/conjuntos-dados/cadastro-nacional-da-pessoa-juridica---cnpj) — a near-census of all registered firms — to
 expose the internal heterogeneity that aggregate size categories conceal. We focus on two
 orthogonal dimensions that revenue-based classification ignores:
 
@@ -97,7 +97,7 @@ pal_gov  <- c(
   "Beneficial Owner\n(passive/investor)" = "#264653"
 )
 
-caption_base <- "Source: Brazilian CNPJ Registry · TidyTuesday 2026 Wk 4 · He, Miao & Boyd"
+caption_base <- "Source: Brazilian CNPJ Registry ·He, Miao & Boyd"
 ```
 
 ### Data Ingestion and Cleaning
@@ -213,7 +213,7 @@ co |>
     heading.align              = "left",
     row_group.background.color = "#f4f4f4"
   ) |>
-  tab_source_note(md("*Source: Brazilian CNPJ Registry · TidyTuesday 2026 Wk 4*"))
+  tab_source_note(md("*Source: Brazilian CNPJ Registry*"))
 ```
 
 ---
