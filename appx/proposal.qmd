@@ -42,10 +42,11 @@ This project uses Brazil's CNPJ business registry — a near-census of all regis
 
 ## Dataset
 
-**Brazilian Companies (CNPJ) — TidyTuesday 2026, Week 4**
+**Brazilian Companies (CNPJ)**
 
 The dataset is drawn from Brazil's *Cadastro Nacional da Pessoa Jurídica* (CNPJ), the federal business registry administered by the Receita Federal (Federal Revenue Service). It contains registration records for firms across Brazil with the following key variables:
 
+The dataset is publicly available via the [TidyTuesday GitHub repository](https://github.com/rfordatascience/tidytuesday) and requires no restricted access or IRB approval
 | Variable | Type | Description |
 |---|---|---|
 | `capital_social` | Numeric (BRL) | Declared capital stock at registration |
@@ -56,8 +57,6 @@ The dataset is drawn from Brazil's *Cadastro Nacional da Pessoa Jurídica* (CNPJ
 | `cnae_fiscal` | Categorical | Primary sector code (CNAE classification) |
 
 The working subset used in this project contains **141,332 observations** after standard cleaning (removal of records with missing or zero capital stock, harmonization of legal-form codes). Capital stock is right-skewed and will be log-transformed for distributional analysis. The `owner_qualification` field is recoded into four governance archetypes: Managing Partner / Administrator, Sole Entrepreneur, Beneficial Owner (passive/investor), and Other.
-
-The dataset is publicly available via the [TidyTuesday GitHub repository](https://github.com/rfordatascience/tidytuesday) and requires no restricted access or IRB approval.
 
 ---
 
@@ -128,4 +127,4 @@ The following tasks are to be posted as individual GitHub Issues in the project 
 | #14 | Milestone 4: Final submission; verify reproducibility end-to-end | Apr 27 | All (Zhijun submits) |
 | #15 | Presentation prep: slides or recorded walkthrough | Apr 27 | All |
 
-> **Note:** GitHub Issues should be created in the project repository with appropriate labels (`milestone-1`, `milestone-2`, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the **Mar 1** deadline.
+> **Note:** GitHub Issues should be created in the project repository with appropriate labels (`milestone-1`, `milestone-2`, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the **April 1** deadline.
