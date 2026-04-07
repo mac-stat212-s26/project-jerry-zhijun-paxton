@@ -301,56 +301,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="dataset" class="level2">
 <h2 class="anchored" data-anchor-id="dataset">Dataset</h2>
-<p><strong>Brazilian Companies (CNPJ) — TidyTuesday 2026, Week 4</strong></p>
+<p><strong>Brazilian Companies (CNPJ)</strong></p>
 <p>The dataset is drawn from Brazil’s <em>Cadastro Nacional da Pessoa Jurídica</em> (CNPJ), the federal business registry administered by the Receita Federal (Federal Revenue Service). It contains registration records for firms across Brazil with the following key variables:</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Variable</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>capital_social</code></td>
-<td>Numeric (BRL)</td>
-<td>Declared capital stock at registration</td>
-</tr>
-<tr class="even">
-<td><code>porte_empresa</code></td>
-<td>Categorical</td>
-<td>Firm size tier under Simples Nacional (Micro, Small, Medium/Large)</td>
-</tr>
-<tr class="odd">
-<td><code>natureza_juridica</code></td>
-<td>Categorical</td>
-<td>Legal form (LLC, sole proprietorship, EIRELI, etc.)</td>
-</tr>
-<tr class="even">
-<td><code>owner_qualification</code></td>
-<td>Categorical</td>
-<td>Legal role of controlling owner (Managing Partner, Beneficial Owner, Sole Entrepreneur, Other)</td>
-</tr>
-<tr class="odd">
-<td><code>municipio</code></td>
-<td>Categorical</td>
-<td>Municipality of registration</td>
-</tr>
-<tr class="even">
-<td><code>cnae_fiscal</code></td>
-<td>Categorical</td>
-<td>Primary sector code (CNAE classification)</td>
-</tr>
-</tbody>
-</table>
+<p>The dataset is publicly available via the <a href="https://github.com/rfordatascience/tidytuesday">TidyTuesday GitHub repository</a> and requires no restricted access or IRB approval | Variable | Type | Description | |—|—|—| | <code>capital_social</code> | Numeric (BRL) | Declared capital stock at registration | | <code>porte_empresa</code> | Categorical | Firm size tier under Simples Nacional (Micro, Small, Medium/Large) | | <code>natureza_juridica</code> | Categorical | Legal form (LLC, sole proprietorship, EIRELI, etc.) | | <code>owner_qualification</code> | Categorical | Legal role of controlling owner (Managing Partner, Beneficial Owner, Sole Entrepreneur, Other) | | <code>municipio</code> | Categorical | Municipality of registration | | <code>cnae_fiscal</code> | Categorical | Primary sector code (CNAE classification) |</p>
 <p>The working subset used in this project contains <strong>141,332 observations</strong> after standard cleaning (removal of records with missing or zero capital stock, harmonization of legal-form codes). Capital stock is right-skewed and will be log-transformed for distributional analysis. The <code>owner_qualification</code> field is recoded into four governance archetypes: Managing Partner / Administrator, Sole Entrepreneur, Beneficial Owner (passive/investor), and Other.</p>
-<p>The dataset is publicly available via the <a href="https://github.com/rfordatascience/tidytuesday">TidyTuesday GitHub repository</a> and requires no restricted access or IRB approval.</p>
 <hr>
 </section>
 <section id="inspiration" class="level2">
@@ -530,7 +484,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <blockquote class="blockquote">
-<p><strong>Note:</strong> GitHub Issues should be created in the project repository with appropriate labels (<code>milestone-1</code>, <code>milestone-2</code>, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the <strong>Mar 1</strong> deadline.</p>
+<p><strong>Note:</strong> GitHub Issues should be created in the project repository with appropriate labels (<code>milestone-1</code>, <code>milestone-2</code>, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the <strong>April 1</strong> deadline.</p>
 </blockquote>
 
 
@@ -1046,93 +1000,92 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dataset</span></span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>**Brazilian Companies (CNPJ) — TidyTuesday 2026, Week 4**</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>**Brazilian Companies (CNPJ)**</span>
 <span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>The dataset is drawn from Brazil's *Cadastro Nacional da Pessoa Jurídica* (CNPJ), the federal business registry administered by the Receita Federal (Federal Revenue Service). It contains registration records for firms across Brazil with the following key variables:</span>
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variable <span class="pp">|</span> Type <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`capital_social`</span> <span class="pp">|</span> Numeric (BRL) <span class="pp">|</span> Declared capital stock at registration <span class="pp">|</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`porte_empresa`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Firm size tier under Simples Nacional (Micro, Small, Medium/Large) <span class="pp">|</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`natureza_juridica`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Legal form (LLC, sole proprietorship, EIRELI, etc.) <span class="pp">|</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`owner_qualification`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Legal role of controlling owner (Managing Partner, Beneficial Owner, Sole Entrepreneur, Other) <span class="pp">|</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`municipio`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Municipality of registration <span class="pp">|</span></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`cnae_fiscal`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Primary sector code (CNAE classification) <span class="pp">|</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>The working subset used in this project contains **141,332 observations** after standard cleaning (removal of records with missing or zero capital stock, harmonization of legal-form codes). Capital stock is right-skewed and will be log-transformed for distributional analysis. The <span class="in">`owner_qualification`</span> field is recoded into four governance archetypes: Managing Partner / Administrator, Sole Entrepreneur, Beneficial Owner (passive/investor), and Other.</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>The dataset is publicly available via the <span class="co">[</span><span class="ot">TidyTuesday GitHub repository</span><span class="co">](https://github.com/rfordatascience/tidytuesday)</span> and requires no restricted access or IRB approval.</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inspiration</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>This project grew out of a prior TidyTuesday analysis that identified a macro-level capital paradox: micro-enterprises constitute the majority of registered Brazilian firms yet control a disproportionately small share of total capital stock. That finding raises a harder question — is this gap primarily *between* size tiers, *within* them, or both simultaneously?</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>The answer matters for development policy. If the capital deficit is concentrated among a genuine subset of micro-enterprises while others are actually well-capitalized holding-company subsidiaries registered as "micro" because their revenue falls below the Simples Nacional threshold, then blanket micro-enterprise subsidies are a blunt and potentially misdirected instrument. This project is motivated by the broader development economics question of *when categorical targeting works and when it fails* — a question with relevance well beyond Brazil, extending to informal economy support programs across Sub-Saharan Africa, South Asia, and Latin America.</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="fu">## Communication Plan</span></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Primary channel:** Google group chat (backup: email)</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Expected response time:** Within 24 hours on weekdays; best-effort on weekends</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Standing meeting:** Wednesdays, 7:00–8:00 PM (location: TBD or Zoom)</span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Async coordination:** GitHub Issues and pull request comments for all code-related decisions; brief meeting notes shared in group chat after each session</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Milestone check-ins:** 48-hour heads-up in group chat before any submission deadline</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="fu">## Roles</span></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>All team members are expected to contribute substantively to analysis, writing, and visualization. Leads exist for accountability, not sole ownership.</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Person <span class="pp">|</span> Responsibilities <span class="pp">|</span></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Point of Contact** <span class="pp">|</span> Zhijun He <span class="pp">|</span> Primary email contact with instructor and preceptors; represents team in official communications; coordinates submission logistics <span class="pp">|</span></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Technical Lead** <span class="pp">|</span> Jerry Miao <span class="pp">|</span> Oversees GitHub repository structure; reviews and merges pull requests; maintains the Quarto website; ensures full reproducibility of the pipeline <span class="pp">|</span></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Style Lead** <span class="pp">|</span> Paxton Boyd <span class="pp">|</span> Enforces the COMP/STAT 112/212 Code Styling Guide across all <span class="in">`.qmd`</span> and <span class="in">`.R`</span> files; reviews all code before submission milestones <span class="pp">|</span></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conflict Resolution</span></span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>**Missed internal deadlines:** If a team member anticipates missing an internal deadline, they notify the group chat at least 24 hours in advance with a revised timeline. The team redistributes the task for the current milestone; the member makes up the contribution before the next deliverable. Repeated missed deadlines — defined as two or more without prior notice — are escalated to the instructor following a team conversation.</span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>**Disagreements (50/50 split):** Each side presents their case for up to five minutes, then the team votes again. If still tied:</span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Code and methodology questions** → Technical Lead (Jerry Miao) has the deciding vote.</span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Framing, writing, and communication questions** → Point of Contact (Zhijun He) has the deciding vote.</span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>If the disagreement is substantive enough that neither tie-breaker feels appropriate, we consult the instructor or a preceptor before the next deadline.</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>**General norm:** Raise concerns early and in the group chat — not in GitHub comments or after a milestone has been submitted.</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a><span class="fu">## Implementation Plan</span></span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>The following tasks are to be posted as individual GitHub Issues in the project repository, tagged with their corresponding milestone label and assignee(s). Dates assume a Week 1 start of **February 24, 2026**.</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Issue <span class="pp">|</span> Task <span class="pp">|</span> Due Date <span class="pp">|</span> Lead <span class="pp">|</span></span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #1 <span class="pp">|</span> Initialize GitHub repo; set up Quarto site skeleton; add <span class="in">`proposal.qmd`</span> template <span class="pp">|</span> Mar 1 <span class="pp">|</span> Jerry (Technical) <span class="pp">|</span></span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #2 <span class="pp">|</span> Draft and submit Milestone 1 proposal; post GitHub Issues #3–#12 <span class="pp">|</span> Mar 7 <span class="pp">|</span> All (Zhijun submits) <span class="pp">|</span></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #3 <span class="pp">|</span> Data ingestion and cleaning: filter, recode <span class="in">`owner_qualification`</span>, log-transform capital <span class="pp">|</span> Mar 12 <span class="pp">|</span> Jerry (Technical) <span class="pp">|</span></span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #4 <span class="pp">|</span> Exploratory data analysis: distributions, missingness audit, outlier assessment <span class="pp">|</span> Mar 14 <span class="pp">|</span> All <span class="pp">|</span></span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #5 <span class="pp">|</span> Build Visualization 1: Lorenz curves by firm size with Gini annotations <span class="pp">|</span> Mar 18 <span class="pp">|</span> Zhijun <span class="pp">|</span></span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #6 <span class="pp">|</span> Build Visualization 2: Governance premium by size tier (boxplots or violin plots) <span class="pp">|</span> Mar 18 <span class="pp">|</span> Jerry <span class="pp">|</span></span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #7 <span class="pp">|</span> Build Visualization 3: Capital-rich micro profile by legal form × governance <span class="pp">|</span> Mar 20 <span class="pp">|</span> Paxton <span class="pp">|</span></span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #8 <span class="pp">|</span> Milestone 2: EDA write-up, narrative captions, and site integration <span class="pp">|</span> Mar 22 <span class="pp">|</span> All (Paxton style review) <span class="pp">|</span></span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #9 <span class="pp">|</span> Regression / modeling: estimate governance premium controlling for size and sector <span class="pp">|</span> Apr 2 <span class="pp">|</span> Jerry <span class="pp">|</span></span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #10 <span class="pp">|</span> Capital-rich micro analysis: logistic model or conditional means by archetype <span class="pp">|</span> Apr 4 <span class="pp">|</span> Zhijun <span class="pp">|</span></span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #11 <span class="pp">|</span> Milestone 3: Analysis write-up draft; incorporate modeling results into narrative <span class="pp">|</span> Apr 10 <span class="pp">|</span> All (Paxton style review) <span class="pp">|</span></span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #12 <span class="pp">|</span> Peer review incorporation and targeted revision <span class="pp">|</span> Apr 18 <span class="pp">|</span> Zhijun coordinates <span class="pp">|</span></span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #13 <span class="pp">|</span> Final website polish: styling, accessibility, consistent theme <span class="pp">|</span> Apr 24 <span class="pp">|</span> Paxton + Jerry <span class="pp">|</span></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #14 <span class="pp">|</span> Milestone 4: Final submission; verify reproducibility end-to-end <span class="pp">|</span> Apr 27 <span class="pp">|</span> All (Zhijun submits) <span class="pp">|</span></span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #15 <span class="pp">|</span> Presentation prep: slides or recorded walkthrough <span class="pp">|</span> Apr 27 <span class="pp">|</span> All <span class="pp">|</span></span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **Note:** GitHub Issues should be created in the project repository with appropriate labels (`milestone-1`, `milestone-2`, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the **Mar 1** deadline.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>The dataset is publicly available via the <span class="co">[</span><span class="ot">TidyTuesday GitHub repository</span><span class="co">](https://github.com/rfordatascience/tidytuesday)</span> and requires no restricted access or IRB approval</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variable <span class="pp">|</span> Type <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`capital_social`</span> <span class="pp">|</span> Numeric (BRL) <span class="pp">|</span> Declared capital stock at registration <span class="pp">|</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`porte_empresa`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Firm size tier under Simples Nacional (Micro, Small, Medium/Large) <span class="pp">|</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`natureza_juridica`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Legal form (LLC, sole proprietorship, EIRELI, etc.) <span class="pp">|</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`owner_qualification`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Legal role of controlling owner (Managing Partner, Beneficial Owner, Sole Entrepreneur, Other) <span class="pp">|</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`municipio`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Municipality of registration <span class="pp">|</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`cnae_fiscal`</span> <span class="pp">|</span> Categorical <span class="pp">|</span> Primary sector code (CNAE classification) <span class="pp">|</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>The working subset used in this project contains **141,332 observations** after standard cleaning (removal of records with missing or zero capital stock, harmonization of legal-form codes). Capital stock is right-skewed and will be log-transformed for distributional analysis. The <span class="in">`owner_qualification`</span> field is recoded into four governance archetypes: Managing Partner / Administrator, Sole Entrepreneur, Beneficial Owner (passive/investor), and Other.</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inspiration</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>This project grew out of a prior TidyTuesday analysis that identified a macro-level capital paradox: micro-enterprises constitute the majority of registered Brazilian firms yet control a disproportionately small share of total capital stock. That finding raises a harder question — is this gap primarily *between* size tiers, *within* them, or both simultaneously?</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>The answer matters for development policy. If the capital deficit is concentrated among a genuine subset of micro-enterprises while others are actually well-capitalized holding-company subsidiaries registered as "micro" because their revenue falls below the Simples Nacional threshold, then blanket micro-enterprise subsidies are a blunt and potentially misdirected instrument. This project is motivated by the broader development economics question of *when categorical targeting works and when it fails* — a question with relevance well beyond Brazil, extending to informal economy support programs across Sub-Saharan Africa, South Asia, and Latin America.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="fu">## Communication Plan</span></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Primary channel:** Google group chat (backup: email)</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Expected response time:** Within 24 hours on weekdays; best-effort on weekends</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Standing meeting:** Wednesdays, 7:00–8:00 PM (location: TBD or Zoom)</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Async coordination:** GitHub Issues and pull request comments for all code-related decisions; brief meeting notes shared in group chat after each session</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Milestone check-ins:** 48-hour heads-up in group chat before any submission deadline</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="fu">## Roles</span></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>All team members are expected to contribute substantively to analysis, writing, and visualization. Leads exist for accountability, not sole ownership.</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Role <span class="pp">|</span> Person <span class="pp">|</span> Responsibilities <span class="pp">|</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Point of Contact** <span class="pp">|</span> Zhijun He <span class="pp">|</span> Primary email contact with instructor and preceptors; represents team in official communications; coordinates submission logistics <span class="pp">|</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Technical Lead** <span class="pp">|</span> Jerry Miao <span class="pp">|</span> Oversees GitHub repository structure; reviews and merges pull requests; maintains the Quarto website; ensures full reproducibility of the pipeline <span class="pp">|</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Style Lead** <span class="pp">|</span> Paxton Boyd <span class="pp">|</span> Enforces the COMP/STAT 112/212 Code Styling Guide across all <span class="in">`.qmd`</span> and <span class="in">`.R`</span> files; reviews all code before submission milestones <span class="pp">|</span></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conflict Resolution</span></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>**Missed internal deadlines:** If a team member anticipates missing an internal deadline, they notify the group chat at least 24 hours in advance with a revised timeline. The team redistributes the task for the current milestone; the member makes up the contribution before the next deliverable. Repeated missed deadlines — defined as two or more without prior notice — are escalated to the instructor following a team conversation.</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>**Disagreements (50/50 split):** Each side presents their case for up to five minutes, then the team votes again. If still tied:</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Code and methodology questions** → Technical Lead (Jerry Miao) has the deciding vote.</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Framing, writing, and communication questions** → Point of Contact (Zhijun He) has the deciding vote.</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>If the disagreement is substantive enough that neither tie-breaker feels appropriate, we consult the instructor or a preceptor before the next deadline.</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>**General norm:** Raise concerns early and in the group chat — not in GitHub comments or after a milestone has been submitted.</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="fu">## Implementation Plan</span></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>The following tasks are to be posted as individual GitHub Issues in the project repository, tagged with their corresponding milestone label and assignee(s). Dates assume a Week 1 start of **February 24, 2026**.</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Issue <span class="pp">|</span> Task <span class="pp">|</span> Due Date <span class="pp">|</span> Lead <span class="pp">|</span></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|---|</span></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #1 <span class="pp">|</span> Initialize GitHub repo; set up Quarto site skeleton; add <span class="in">`proposal.qmd`</span> template <span class="pp">|</span> Mar 1 <span class="pp">|</span> Jerry (Technical) <span class="pp">|</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #2 <span class="pp">|</span> Draft and submit Milestone 1 proposal; post GitHub Issues #3–#12 <span class="pp">|</span> Mar 7 <span class="pp">|</span> All (Zhijun submits) <span class="pp">|</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #3 <span class="pp">|</span> Data ingestion and cleaning: filter, recode <span class="in">`owner_qualification`</span>, log-transform capital <span class="pp">|</span> Mar 12 <span class="pp">|</span> Jerry (Technical) <span class="pp">|</span></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #4 <span class="pp">|</span> Exploratory data analysis: distributions, missingness audit, outlier assessment <span class="pp">|</span> Mar 14 <span class="pp">|</span> All <span class="pp">|</span></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #5 <span class="pp">|</span> Build Visualization 1: Lorenz curves by firm size with Gini annotations <span class="pp">|</span> Mar 18 <span class="pp">|</span> Zhijun <span class="pp">|</span></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #6 <span class="pp">|</span> Build Visualization 2: Governance premium by size tier (boxplots or violin plots) <span class="pp">|</span> Mar 18 <span class="pp">|</span> Jerry <span class="pp">|</span></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #7 <span class="pp">|</span> Build Visualization 3: Capital-rich micro profile by legal form × governance <span class="pp">|</span> Mar 20 <span class="pp">|</span> Paxton <span class="pp">|</span></span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #8 <span class="pp">|</span> Milestone 2: EDA write-up, narrative captions, and site integration <span class="pp">|</span> Mar 22 <span class="pp">|</span> All (Paxton style review) <span class="pp">|</span></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #9 <span class="pp">|</span> Regression / modeling: estimate governance premium controlling for size and sector <span class="pp">|</span> Apr 2 <span class="pp">|</span> Jerry <span class="pp">|</span></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #10 <span class="pp">|</span> Capital-rich micro analysis: logistic model or conditional means by archetype <span class="pp">|</span> Apr 4 <span class="pp">|</span> Zhijun <span class="pp">|</span></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #11 <span class="pp">|</span> Milestone 3: Analysis write-up draft; incorporate modeling results into narrative <span class="pp">|</span> Apr 10 <span class="pp">|</span> All (Paxton style review) <span class="pp">|</span></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #12 <span class="pp">|</span> Peer review incorporation and targeted revision <span class="pp">|</span> Apr 18 <span class="pp">|</span> Zhijun coordinates <span class="pp">|</span></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #13 <span class="pp">|</span> Final website polish: styling, accessibility, consistent theme <span class="pp">|</span> Apr 24 <span class="pp">|</span> Paxton + Jerry <span class="pp">|</span></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #14 <span class="pp">|</span> Milestone 4: Final submission; verify reproducibility end-to-end <span class="pp">|</span> Apr 27 <span class="pp">|</span> All (Zhijun submits) <span class="pp">|</span></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> #15 <span class="pp">|</span> Presentation prep: slides or recorded walkthrough <span class="pp">|</span> Apr 27 <span class="pp">|</span> All <span class="pp">|</span></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **Note:** GitHub Issues should be created in the project repository with appropriate labels (`milestone-1`, `milestone-2`, etc.) and assignees matching the Lead column above. The Technical Lead (Jerry) is responsible for setting up the issue tracker by the **April 1** deadline.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
