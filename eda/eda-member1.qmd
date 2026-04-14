@@ -1,5 +1,384 @@
 ---
-title: "Member 1 First Name & Last Name Initial"
+title: "Paxton Boyd"
 ---
 
-Your exploratory data analysis of the team datasets go here.
+## Data and Setup
+
+### Packages
+
+```{r}
+#| label: setup
+
+library(tidyverse)
+library(scales)
+library(ggridges)
+library(patchwork)
+library(boot)          # bootstrap Gini confidence intervals
+library(quantreg)      # quantile regression
+library(broom)         # tidy model outputs
+library(gt)            # publication-quality tables
+library(modelsummary)  # regression summary tables
+library(ggtext)        # markdown / HTML in ggplot labels
+library(glue)          # string interpolation
+
+# ── Shared palette ─────────────────────────────────────────────────────────────
+pal_size <- c("Micro" = "#e76f51", "Small" = "#f4a261", "Medium/Large" = "#264653")
+pal_gov  <- c(
+  "Sole Entrepreneur"                    = "#e9c46a",
+  "Managing Partner /\nAdministrator"    = "#4a90d9",
+  "Beneficial Owner\n(passive/investor)" = "#264653"
+)
+
+caption_base <- "Source: Brazilian CNPJ Registry ·He, Miao & Boyd"
+```
+
+
+### Data Ingestion and Cleaning
+
+```{r}
+#| label: data-load
+
+companies <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
+  show_col_types = FALSE
+)
+
+# ── Core recoding ───────────────────────────────────────────────────────────────
+co <- companies |>
+  # Drop records with missing or non-positive capital (not usable for log-scale analysis)
+  filter(
+    !is.na(company_size),
+    !is.na(capital_stock),
+    capital_stock > 0,
+    !is.na(owner_qualification)
+  ) |>
+  mutate(
+    # Size tier (ordered factor)
+    size = case_when(
+      company_size == "micro-enterprise" ~ "Micro",
+      company_size == "small-enterprise" ~ "Small",
+      TRUE                               ~ "Medium/Large"
+    ),
+    size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
+
+    # Governance archetype: collapse owner_qualification into 4 classes
+    governance = case_when(
+      str_detect(owner_qualification,
+                 regex("beneficial owner", ignore_case = TRUE)) ~
+        "Beneficial Owner\n(passive/investor)",
+      str_detect(owner_qualification,
+                 regex("entrepreneur|business owner", ignore_case = TRUE)) ~
+        "Sole Entrepreneur",
+      str_detect(owner_qualification,
+                 regex("managing partner|administrator", ignore_case = TRUE)) ~
+        "Managing Partner /\nAdministrator",
+      TRUE ~ "Other"
+    ),
+    governance = factor(governance, levels = c(
+      "Sole Entrepreneur",
+      "Managing Partner /\nAdministrator",
+      "Beneficial Owner\n(passive/investor)",
+      "Other"
+    )),
+
+    # Log10 capital for distributional analysis
+    log_capital = log10(capital_stock),
+
+    # Legal-form shorthand for micro analysis
+    legal_short = case_when(
+      str_detect(legal_nature, "LLC")                 ~ "LLC",
+      str_detect(legal_nature, "Sole Proprietorship") ~ "Sole Prop.",
+      str_detect(legal_nature, "Individual Limited")  ~ "EIRELI",
+      str_detect(legal_nature, "Simple")              ~ "Simple Part.",
+      str_detect(legal_nature, "Silent")              ~ "Silent Part.",
+      str_detect(legal_nature, "Corporation")         ~ "Corporation",
+      TRUE                                            ~ "Other"
+    ),
+
+    # Capital-rich flag: top quartile *within* micro-enterprises
+    capital_q75_micro     = quantile(capital_stock[size == "Micro"], 0.75, na.rm = TRUE),
+    is_capital_rich_micro = (size == "Micro") & (capital_stock >= capital_q75_micro)
+  )
+
+cat("Final observations:", scales::comma(nrow(co)), "\n")
+```
+
+### Descriptive Summary Table
+
+```{r}
+#| label: summary-table
+
+co |>
+  filter(governance != "Other") |>
+  group_by(size, governance) |>
+  summarise(
+    n        = n(),
+    med_cap  = median(capital_stock),
+    mean_cap = mean(capital_stock),
+    p25_cap  = quantile(capital_stock, 0.25),
+    p75_cap  = quantile(capital_stock, 0.75),
+    .groups  = "drop"
+  ) |>
+  gt(groupname_col = "size") |>
+  tab_header(
+    title    = md("**Capital Stock by Firm Size and Governance Archetype**"),
+    subtitle = "All values in BRL · Median, mean, and interquartile range"
+  ) |>
+  cols_label(
+    governance = "Governance Archetype",
+    n          = "N",
+    med_cap    = "Median",
+    mean_cap   = "Mean",
+    p25_cap    = "P25",
+    p75_cap    = "P75"
+  ) |>
+  fmt_number(
+    columns  = c(med_cap, mean_cap, p25_cap, p75_cap),
+    suffixing = TRUE, decimals = 1
+  ) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0) |>
+  tab_style(
+    style     = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |>
+  tab_options(
+    table.font.size            = px(13),
+    heading.align              = "left",
+    row_group.background.color = "#f4f4f4"
+  ) |>
+  tab_source_note(md("*Source: Brazilian CNPJ Registry*"))
+```
+
+---
+## Analysis I — Within-Tier Inequality {#sec-inequality}
+
+### Lorenz Curves with Bootstrapped Gini Coefficients
+
+A Gini coefficient point estimate is not sufficient for inference: it has no standard error as
+typically presented. We bootstrap 999 resamples per size tier to construct 95% percentile
+confidence intervals, confirming whether the ordering across tiers is statistically reliable.
+
+```{r}
+#| label: gini-bootstrap
+#| cache: true
+
+# ── Gini helper ─────────────────────────────────────────────────────────────────
+gini <- function(x) {
+  x <- sort(x[x > 0 & !is.na(x)])
+  n <- length(x)
+  if (n < 2L) return(NA_real_)
+  2 * sum(seq_len(n) * x) / (n * sum(x)) - (n + 1L) / n
+}
+
+gini_stat <- function(data, i) gini(data[i])
+
+set.seed(112)
+gini_ci <- co |>
+  group_by(size) |>
+  group_modify(~ {
+    b  <- boot(.x$capital_stock, gini_stat, R = 999)
+    ci <- boot.ci(b, type = "perc", conf = 0.95)
+    tibble(
+      g     = b$t0,
+      lower = ci$percent[4L],
+      upper = ci$percent[5L],
+      n     = nrow(.x)
+    )
+  }) |>
+  ungroup()
+
+gini_ci |>
+  mutate(across(c(g, lower, upper), ~ round(.x, 4))) |>
+  gt() |>
+  tab_header(
+    title    = md("**Bootstrapped Gini Coefficients by Firm Size**"),
+    subtitle = "999 resamples · 95% percentile confidence interval"
+  ) |>
+  cols_label(
+    size  = "Tier", g = "Gini",
+    lower = "CI Lower", upper = "CI Upper", n = "N"
+  ) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0)
+```
+
+```{r}
+#| label: lorenz-plot
+#| fig-width: 10
+#| fig-height: 5.5
+
+lorenz_data <- co |>
+  group_by(size) |>
+  arrange(capital_stock, .by_group = TRUE) |>
+  mutate(
+    cum_firms   = row_number() / n(),
+    cum_capital = cumsum(capital_stock) / sum(capital_stock)
+  ) |>
+  ungroup()
+
+gini_labels <- gini_ci |>
+  mutate(
+    label = glue("Gini = {round(g, 3)}\n[{round(lower, 3)}, {round(upper, 3)}]"),
+    x = 0.20,
+    y = c(0.70, 0.59, 0.48)
+  )
+
+ggplot(lorenz_data, aes(x = cum_firms, y = cum_capital, colour = size)) +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed", colour = "grey60", linewidth = 0.55) +
+  geom_line(linewidth = 1.1, alpha = 0.9) +
+  geom_ribbon(
+    data    = filter(lorenz_data, size == "Micro"),
+    aes(ymin = cum_capital, ymax = cum_firms),
+    fill    = "#e76f51", alpha = 0.07, colour = NA
+  ) +
+  geom_label(
+    data        = gini_labels,
+    aes(x = x, y = y, label = label, colour = size),
+    inherit.aes = FALSE,
+    fill        = "white", label.size = 0.25,
+    fontface    = "bold", size = 3.3, lineheight = 1.2
+  ) +
+  annotate("text", x = 0.59, y = 0.48,
+           label = "Perfect equality", colour = "grey55",
+           size = 3.2, angle = 42) +
+  scale_colour_manual(values = pal_size, name = "Firm size") +
+  scale_x_continuous(labels = percent_format(),
+                     name   = "Cumulative share of firms") +
+  scale_y_continuous(labels = percent_format(),
+                     name   = "Cumulative share of capital") +
+  labs(
+    title   = "Micro-enterprises are internally the most unequal — **Gini > 0.60**",
+    subtitle = glue(
+      "Lorenz curves by firm size tier. Labels show Gini point estimate and ",
+      "bootstrapped 95% CI (999 resamples).\n",
+      "The further the curve bows below the diagonal, the more concentrated ",
+      "capital is among a small fraction of firms within that tier."
+    ),
+    caption = caption_base
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title       = element_markdown(face = "bold", size = 14, colour = "#264653"),
+    plot.subtitle    = element_text(colour = "grey40", size = 10.5,
+                                    lineheight = 1.3, margin = margin(b = 14)),
+    plot.caption     = element_text(colour = "grey50", size = 8, hjust = 0),
+    legend.position  = "top",
+    panel.grid.minor = element_blank()
+  )
+```
+
+The bootstrapped confidence intervals confirm that the Gini point estimates are precise: the
+non-overlapping 95% CIs establish that all three tiers differ significantly in their degree of
+internal inequality. Micro-enterprises (Gini > 0.60) are substantially more internally
+unequal than either small or medium/large firms.
+
+### Theil T Decomposition: Within vs. Between Groups
+
+The Lorenz curve compares tiers but cannot partition total inequality into *within-tier* and
+*between-tier* components. The **Theil T index** (GE(1)) supports an exact additive
+decomposition:
+
+$$T = T_{\text{between}} + T_{\text{within}} = \sum_g \frac{n_g}{N}\frac{\mu_g}{\mu}\ln\frac{\mu_g}{\mu} \;+\; \sum_g \frac{n_g}{N}\frac{\mu_g}{\mu} T_g$$
+where $T_g$ is the within-group Theil T for group $g$, $n_g$ is the group count, $\mu_g$ is the
+group mean capital, and $\mu$ is the overall mean.
+
+```{r}
+#| label: theil-decomp
+#| fig-width: 9
+#| fig-height: 4.5
+
+theil_t <- function(x) {
+  x  <- x[x > 0 & !is.na(x)]
+  mu <- mean(x)
+  mean((x / mu) * log(x / mu))
+}
+
+decomp <- co |>
+  group_by(size) |>
+  summarise(
+    n_g = n(),
+    mu_g = mean(capital_stock),
+    T_g  = theil_t(capital_stock),
+    .groups = "drop"
+  ) |>
+  mutate(
+    N             = sum(n_g),
+    mu            = sum(n_g * mu_g) / N,
+    w_g           = (n_g / N) * (mu_g / mu),
+    T_between_g   = w_g * log(mu_g / mu),
+    T_within_g    = w_g * T_g
+  )
+
+T_between <- sum(decomp$T_between_g)
+T_within  <- sum(decomp$T_within_g)
+T_total   <- T_between + T_within
+
+# Panel A: total within vs between
+summary_bar <- tibble(
+  component = c("Between tiers", "Within tiers"),
+  value     = c(T_between, T_within),
+  pct       = c(T_between / T_total, T_within / T_total)
+)
+
+p_summary <- ggplot(summary_bar, aes(x = component, y = pct, fill = component)) +
+  geom_col(width = 0.55, alpha = 0.9) +
+  geom_text(aes(label = percent(pct, accuracy = 0.1)),
+            vjust = -0.5, fontface = "bold", size = 4.2) +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 1),
+                     name = "Share of total Theil T") +
+  scale_fill_manual(
+    values = c("Between tiers" = "#264653", "Within tiers" = "#e76f51"),
+    guide  = "none"
+  ) +
+  labs(title    = "Total decomposition",
+       subtitle = glue("Total Theil T = {round(T_total, 3)}"),
+       x = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", colour = "#264653"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor   = element_blank())
+
+# Panel B: within-tier contributions broken down by size
+p_within <- decomp |>
+  mutate(pct_of_total = T_within_g / T_total) |>
+  ggplot(aes(x = fct_rev(size), y = pct_of_total, fill = size)) +
+  geom_col(width = 0.55, alpha = 0.9) +
+  geom_text(aes(label = percent(pct_of_total, accuracy = 0.1)),
+            vjust = -0.5, fontface = "bold", size = 4.2) +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 0.7),
+                     name = "Within-tier share of total Theil T") +
+  scale_fill_manual(values = pal_size, guide = "none") +
+  labs(
+    title    = "Within-tier breakdown by size",
+    subtitle = "Each bar = one tier's contribution to the within-group component",
+    x = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", colour = "#264653"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor   = element_blank())
+
+p_summary + p_within +
+  plot_annotation(
+    title   = "Most of Brazil's capital inequality is *within* size tiers, not between them",
+    subtitle = glue(
+      "Theil T decomposition. Within-tier component = {percent(T_within / T_total, 0.1)} ",
+      "of total inequality — the largest driver is inequality inside micro-enterprises."
+    ),
+    caption = caption_base,
+    theme   = theme(
+      plot.title    = element_markdown(face = "bold", size = 14, colour = "#264653"),
+      plot.subtitle = element_text(colour = "grey40", size = 10.5, lineheight = 1.3),
+      plot.caption  = element_text(colour = "grey50", size = 8)
+    )
+  )
+```
+
+The decomposition is the key structural result of this section. If most inequality were
+*between* tiers, then adjusting the revenue classification cutoffs could reduce aggregate
+inequality. But if the dominant component is *within* tiers, revenue-threshold reform achieves
+little: the same cutoff that separates micro from small cannot distinguish capital-poor
+subsistence firms from well-endowed holding-company subsidiaries within the micro category.
+The within-tier dominance directly motivates the governance analysis that follows.
+
+---
