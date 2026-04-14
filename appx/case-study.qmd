@@ -1,7 +1,5 @@
 ---
 title: "Case Study" 
-author:
-  - name: Jerry Miao
 ---
 
 # Case Study: *Uber Is Taking Millions Of Manhattan Rides Away From Taxis*
