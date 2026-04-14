@@ -1,5 +1,278 @@
 ---
-title: "Member 2 First Name & Last Name Initial"
+title: "Member 2 Zhijun He"
 ---
 
-Your exploratory data analysis of the team datasets go here.
+## Data and Setup
+
+### Packages
+
+```{r}
+#| label: setup
+
+library(tidyverse)
+library(scales)
+library(ggridges)
+library(patchwork)
+library(boot)          # bootstrap Gini confidence intervals
+library(quantreg)      # quantile regression
+library(broom)         # tidy model outputs
+library(gt)            # publication-quality tables
+library(modelsummary)  # regression summary tables
+library(ggtext)        # markdown / HTML in ggplot labels
+library(glue)          # string interpolation
+
+# ── Shared palette ─────────────────────────────────────────────────────────────
+pal_size <- c("Micro" = "#e76f51", "Small" = "#f4a261", "Medium/Large" = "#264653")
+pal_gov  <- c(
+  "Sole Entrepreneur"                    = "#e9c46a",
+  "Managing Partner /\nAdministrator"    = "#4a90d9",
+  "Beneficial Owner\n(passive/investor)" = "#264653"
+)
+
+caption_base <- "Source: Brazilian CNPJ Registry ·He, Miao & Boyd"
+```
+
+### Data Ingestion and Cleaning
+
+```{r}
+#| label: data-load
+
+companies <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
+  show_col_types = FALSE
+)
+
+# ── Core recoding ───────────────────────────────────────────────────────────────
+co <- companies |>
+  # Drop records with missing or non-positive capital (not usable for log-scale analysis)
+  filter(
+    !is.na(company_size),
+    !is.na(capital_stock),
+    capital_stock > 0,
+    !is.na(owner_qualification)
+  ) |>
+  mutate(
+    # Size tier (ordered factor)
+    size = case_when(
+      company_size == "micro-enterprise" ~ "Micro",
+      company_size == "small-enterprise" ~ "Small",
+      TRUE                               ~ "Medium/Large"
+    ),
+    size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
+
+    # Governance archetype: collapse owner_qualification into 4 classes
+    governance = case_when(
+      str_detect(owner_qualification,
+                 regex("beneficial owner", ignore_case = TRUE)) ~
+        "Beneficial Owner\n(passive/investor)",
+      str_detect(owner_qualification,
+                 regex("entrepreneur|business owner", ignore_case = TRUE)) ~
+        "Sole Entrepreneur",
+      str_detect(owner_qualification,
+                 regex("managing partner|administrator", ignore_case = TRUE)) ~
+        "Managing Partner /\nAdministrator",
+      TRUE ~ "Other"
+    ),
+    governance = factor(governance, levels = c(
+      "Sole Entrepreneur",
+      "Managing Partner /\nAdministrator",
+      "Beneficial Owner\n(passive/investor)",
+      "Other"
+    )),
+
+    # Log10 capital for distributional analysis
+    log_capital = log10(capital_stock),
+
+    # Legal-form shorthand for micro analysis
+    legal_short = case_when(
+      str_detect(legal_nature, "LLC")                 ~ "LLC",
+      str_detect(legal_nature, "Sole Proprietorship") ~ "Sole Prop.",
+      str_detect(legal_nature, "Individual Limited")  ~ "EIRELI",
+      str_detect(legal_nature, "Simple")              ~ "Simple Part.",
+      str_detect(legal_nature, "Silent")              ~ "Silent Part.",
+      str_detect(legal_nature, "Corporation")         ~ "Corporation",
+      TRUE                                            ~ "Other"
+    ),
+
+    # Capital-rich flag: top quartile *within* micro-enterprises
+    capital_q75_micro     = quantile(capital_stock[size == "Micro"], 0.75, na.rm = TRUE),
+    is_capital_rich_micro = (size == "Micro") & (capital_stock >= capital_q75_micro)
+  )
+
+cat("Final observations:", scales::comma(nrow(co)), "\n")
+```
+---
+
+## Analysis II — The Governance Premium {#sec-governance}
+
+### Capital Distribution by Governance Archetype
+
+We examine the unconditional distribution of log-capital by governance archetype within each
+size tier. Quantile lines at Q1, Q2, and Q3 are shown. Kruskal-Wallis tests (non-parametric,
+appropriate given non-normal capital distributions) evaluate whether governance predicts capital
+within each tier.
+
+```{r}
+#| label: governance-ridges
+#| fig-width: 11
+#| fig-height: 6.5
+
+# Kruskal-Wallis p-values per size tier
+kw_pvals <- co |>
+  filter(governance != "Other") |>
+  group_by(size) |>
+  summarise(
+    p = kruskal.test(capital_stock ~ governance)$p.value,
+    .groups = "drop"
+  ) |>
+  mutate(
+    p_lab = if_else(p < 0.001, "KW: p < 0.001", glue("KW: p = {round(p, 3)}"))
+  )
+
+gov_medians <- co |>
+  filter(governance != "Other") |>
+  group_by(size, governance) |>
+  summarise(med_cap = median(capital_stock), n = n(), .groups = "drop") |>
+  mutate(
+    med_lab = glue("md: {number(med_cap, scale = 1e-3, suffix = 'k', accuracy = 1)}")
+  )
+
+ggplot(
+  co |> filter(governance != "Other"),
+  aes(x = log_capital, y = governance, fill = governance)
+) +
+  geom_density_ridges(
+    alpha          = 0.75, scale = 0.88,
+    quantile_lines = TRUE, quantiles = c(0.25, 0.5, 0.75),
+    colour = "white", linewidth = 0.35
+  ) +
+  geom_text(
+    data        = gov_medians,
+    aes(x = log10(med_cap) + 0.05, y = governance, label = med_lab),
+    inherit.aes = FALSE,
+    size = 2.8, colour = "grey20", hjust = 0, vjust = -1.5
+  ) +
+  geom_text(
+    data        = kw_pvals,
+    aes(x = Inf, y = Inf, label = p_lab),
+    inherit.aes = FALSE,
+    hjust = 1.1, vjust = 1.5,
+    size = 3.0, colour = "grey30", fontface = "italic"
+  ) +
+  facet_wrap(~size, nrow = 1) +
+  scale_fill_manual(values = pal_gov, guide = "none") +
+  scale_x_continuous(
+    breaks = c(5, 5.5, 6, 6.5, 7, 7.5, 8),
+    labels = c("100k", "316k", "1M", "3.2M", "10M", "32M", "100M"),
+    name   = "Capital stock (BRL, log10 scale)"
+  ) +
+  labs(
+    title    = "Beneficial Owners command higher capital at **every** size tier",
+    subtitle = paste0(
+      "Density ridges by governance archetype within each firm-size tier.\n",
+      "Vertical white lines mark Q1, median, and Q3. ",
+      "KW = Kruskal-Wallis non-parametric group comparison."
+    ),
+    y       = NULL,
+    caption = caption_base
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title         = element_markdown(face = "bold", size = 14, colour = "#264653"),
+    plot.subtitle      = element_text(colour = "grey40", size = 10.5,
+                                      lineheight = 1.3, margin = margin(b = 14)),
+    plot.caption       = element_text(colour = "grey50", size = 8, hjust = 0),
+    strip.text         = element_text(face = "bold", size = 12, colour = "#264653"),
+    strip.background   = element_rect(fill = "grey95", colour = NA),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+### Quantile Regression: Does the Governance Premium Vary Across the Distribution?
+
+A median regression (τ = 0.5) describes the typical firm, but development policy is most
+concerned with the *lower* tail (genuinely capital-constrained entrepreneurs) and the *upper*
+tail (well-capitalized investment vehicles masquerading as micro-enterprises). Quantile regression
+at τ ∈ {0.10, 0.25, 0.50, 0.75, 0.90} reveals whether the governance premium is uniform or
+systematically concentrated at the extremes.
+
+```{r}
+#| label: quantile-regression
+#| fig-width: 11
+#| fig-height: 5.5
+#| cache: true
+
+taus <- c(0.10, 0.25, 0.50, 0.75, 0.90)
+
+# Recode to short labels — keeps coefficient names clean
+qr_data <- co |>
+  filter(governance != "Other") |>
+  mutate(
+    gov = fct_recode(governance,
+      "Managing Partner" = "Managing Partner /\nAdministrator",
+      "Beneficial Owner" = "Beneficial Owner\n(passive/investor)"
+    ),
+    gov = relevel(gov, ref = "Sole Entrepreneur")
+  )
+
+# Point estimates only — avoids singular matrix from NID SE
+qr_tidy <- map_dfr(taus, \(tau) {
+  fit <- rq(log_capital ~ gov + size, tau = tau, data = qr_data, method = "fn")
+  tibble(term = names(coef(fit)), estimate = coef(fit), tau = tau)
+}) |>
+  filter(str_detect(term, "^gov")) |>
+  mutate(gov_label    = str_remove(term, "^gov"),
+         effect_ratio = 10^estimate)
+
+# OLS mean-effect comparison
+ols_coef <- lm(log_capital ~ gov + size, data = qr_data) |>
+  tidy() |>
+  filter(str_detect(term, "^gov")) |>
+  mutate(gov_label    = str_remove(term, "^gov"),
+         effect_ratio = 10^estimate)
+
+pal_gov_short <- c("Managing Partner" = "#4a90d9", "Beneficial Owner" = "#264653")
+
+ggplot(qr_tidy, aes(x = tau, y = effect_ratio, colour = gov_label)) +
+  geom_hline(yintercept = 1, colour = "grey60",
+             linetype = "dotted", linewidth = 0.5) +
+  geom_hline(data = ols_coef,
+             aes(yintercept = effect_ratio, colour = gov_label),
+             linetype = "dashed", linewidth = 0.65, alpha = 0.55) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  facet_wrap(~gov_label, nrow = 1, scales = "free_y") +
+  scale_colour_manual(values = pal_gov_short, guide = "none") +
+  scale_x_continuous(breaks = taus, labels = paste0("t=", taus)) +
+  scale_y_continuous(labels = \(x) paste0(round(x, 2), "x"),
+                     name   = "Capital multiplier vs. Sole Entrepreneur baseline") +
+  labs(
+    title    = "The governance premium **widens at the upper tail** — especially for Beneficial Owners",
+    subtitle = paste0(
+      "Quantile regression point estimates (exponentiated) at tau = 0.10, 0.25, 0.50, 0.75, 0.90.\n",
+      "Baseline = Sole Entrepreneur. Dashed line = OLS conditional mean."
+    ),
+    x = "Quantile (tau)", caption = caption_base
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title       = element_markdown(face = "bold", size = 14, colour = "#264653"),
+    plot.subtitle    = element_text(colour = "grey40", size = 10.2,
+                                    lineheight = 1.3, margin = margin(b = 14)),
+    plot.caption     = element_text(colour = "grey50", size = 8, hjust = 0),
+    strip.text       = element_text(face = "bold", size = 11, colour = "#264653"),
+    strip.background = element_rect(fill = "grey95", colour = NA),
+    panel.grid.minor = element_blank(),
+    axis.text.x      = element_text(size = 9)
+  )
+```
+
+The quantile regression reveals a pattern OLS obscures: the governance premium is not uniform.
+For Beneficial Owners, the capital multiplier relative to sole entrepreneurs grows substantially
+from the 10th to the 90th percentile. This asymmetry is diagnostic — Beneficial Owner-controlled
+firms are not simply "shifted up" relative to sole entrepreneurs but are a structurally different
+population that saturates the upper tail of the capital distribution. The OLS estimate (dashed
+line) understates the premium at the upper tail and overstates it at the lower tail.
+
+---
