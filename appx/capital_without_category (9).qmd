@@ -3,9 +3,9 @@ title: "Capital Without Category: Governance, Inequality, and the Micro-Enterpri
 subtitle: "TidyTuesday 2026 · Week 4 · Brazilian Companies (CNPJ)"
 author:
   - name: Zhijun He
-    roles: "Point of Contact · Analysis III (§6)"
+    roles: "Point of Contact · Analysis II (§6)"
   - name: Jerry Miao
-    roles: "Technical Lead · Analysis II (§5)"
+    roles: "Technical Lead · Analysis III (§5)"
   - name: Paxton Boyd
     roles: "Style Lead · Analysis I (§4)"
 date: "2026-03-25"
