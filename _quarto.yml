@@ -14,7 +14,7 @@ book:
   back-to-top-navigation: true
 
   sidebar:
-    title: "Team Name"
+    title: "JZP"
     logo: assets/sidebar-logo.png
     collapse-level: 2
     style: docked
@@ -32,6 +32,7 @@ book:
   appendices:
     - appx/proposal.qmd
     - appx/case-study.qmd
+    - appx/capital_without_category.qmd
     - wa/wa-member1.qmd
     - wa/wa-member2.qmd
     - wa/wa-member3.qmd

@@ -101,7 +101,8 @@ co <- companies |>
 
 cat("Final observations:", scales::comma(nrow(co)), "\n")
 ```
----
+
+***
 
 ## Analysis II — The Governance Premium {#sec-governance}
 

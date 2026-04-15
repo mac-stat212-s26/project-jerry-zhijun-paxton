@@ -101,7 +101,8 @@ co <- companies |>
 
 cat("Final observations:", scales::comma(nrow(co)), "\n")
 ```
----
+
+***
 
 ## Analysis III — The Capital-Rich Micro: Who Escapes the Trap? {#sec-escape}
 

@@ -1,5 +1,5 @@
 ---
-title: "Paxton Boyd"
+title: "Member 1 Paxton Boyd"
 ---
 
 ## Data and Setup
@@ -149,7 +149,7 @@ co |>
   tab_source_note(md("*Source: Brazilian CNPJ Registry*"))
 ```
 
----
+***
 ## Analysis I — Within-Tier Inequality {#sec-inequality}
 
 ### Lorenz Curves with Bootstrapped Gini Coefficients
