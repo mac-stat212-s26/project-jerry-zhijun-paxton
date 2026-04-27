@@ -9,6 +9,7 @@
 <meta name="author" content="Zhijun He">
 <meta name="author" content="Jerry Miao">
 <meta name="author" content="Paxton Boyd">
+<meta name="keywords" content="exploratory data analysis, inequality, power law, governance, Brazil, CNPJ registry, TidyTuesday">
 
 <title>Capital Without Category</title>
 <style>
@@ -75,14 +76,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-707d8167ce6003fca903bfe2be84ab7f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-5b0104e2851f7f935c32d564ba449a5d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-372234afc2e8d1fdffa1d11f47028b25.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-5b0104e2851f7f935c32d564ba449a5d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-7202036dd3638cbfcbeb4151d116aa42.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -116,169 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="style/custom.css">
 </head>
 
-<body class="nav-sidebar docked quarto-light"><script id="quarto-html-before-body" type="application/javascript">
-    const toggleBodyColorMode = (bsSheetEl) => {
-      const mode = bsSheetEl.getAttribute("data-mode");
-      const bodyEl = window.document.querySelector("body");
-      if (mode === "dark") {
-        bodyEl.classList.add("quarto-dark");
-        bodyEl.classList.remove("quarto-light");
-      } else {
-        bodyEl.classList.add("quarto-light");
-        bodyEl.classList.remove("quarto-dark");
-      }
-    }
-    const toggleBodyColorPrimary = () => {
-      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
-      if (bsSheetEl) {
-        toggleBodyColorMode(bsSheetEl);
-      }
-    }
-    const setColorSchemeToggle = (alternate) => {
-      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-      for (let i=0; i < toggles.length; i++) {
-        const toggle = toggles[i];
-        if (toggle) {
-          if (alternate) {
-            toggle.classList.add("alternate");
-          } else {
-            toggle.classList.remove("alternate");
-          }
-        }
-      }
-    };
-    const toggleColorMode = (alternate) => {
-      // Switch the stylesheets
-      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
-      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-      manageTransitions('#quarto-margin-sidebar .nav-link', false);
-      if (alternate) {
-        // note: dark is layered on light, we don't disable primary!
-        enableStylesheet(alternateStylesheets);
-        for (const sheetNode of alternateStylesheets) {
-          if (sheetNode.id === "quarto-bootstrap") {
-            toggleBodyColorMode(sheetNode);
-          }
-        }
-      } else {
-        disableStylesheet(alternateStylesheets);
-        enableStylesheet(primaryStylesheets)
-        toggleBodyColorPrimary();
-      }
-      manageTransitions('#quarto-margin-sidebar .nav-link', true);
-      // Switch the toggles
-      setColorSchemeToggle(alternate)
-      // Hack to workaround the fact that safari doesn't
-      // properly recolor the scrollbar when toggling (#1455)
-      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-        manageTransitions("body", false);
-        window.scrollTo(0, 1);
-        setTimeout(() => {
-          window.scrollTo(0, 0);
-          manageTransitions("body", true);
-        }, 40);
-      }
-    }
-    const disableStylesheet = (stylesheets) => {
-      for (let i=0; i < stylesheets.length; i++) {
-        const stylesheet = stylesheets[i];
-        stylesheet.rel = 'disabled-stylesheet';
-      }
-    }
-    const enableStylesheet = (stylesheets) => {
-      for (let i=0; i < stylesheets.length; i++) {
-        const stylesheet = stylesheets[i];
-        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
-          stylesheet.rel = 'stylesheet';
-        }
-      }
-    }
-    const manageTransitions = (selector, allowTransitions) => {
-      const els = window.document.querySelectorAll(selector);
-      for (let i=0; i < els.length; i++) {
-        const el = els[i];
-        if (allowTransitions) {
-          el.classList.remove('notransition');
-        } else {
-          el.classList.add('notransition');
-        }
-      }
-    }
-    const isFileUrl = () => {
-      return window.location.protocol === 'file:';
-    }
-    const hasAlternateSentinel = () => {
-      let styleSentinel = getColorSchemeSentinel();
-      if (styleSentinel !== null) {
-        return styleSentinel === "alternate";
-      } else {
-        return false;
-      }
-    }
-    const setStyleSentinel = (alternate) => {
-      const value = alternate ? "alternate" : "default";
-      if (!isFileUrl()) {
-        window.localStorage.setItem("quarto-color-scheme", value);
-      } else {
-        localAlternateSentinel = value;
-      }
-    }
-    const getColorSchemeSentinel = () => {
-      if (!isFileUrl()) {
-        const storageValue = window.localStorage.getItem("quarto-color-scheme");
-        return storageValue != null ? storageValue : localAlternateSentinel;
-      } else {
-        return localAlternateSentinel;
-      }
-    }
-    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-      let newTheme = '';
-      if(authorPrefersDark) {
-        newTheme = isAlternate ? baseTheme : alternateTheme;
-      } else {
-        newTheme = isAlternate ? alternateTheme : baseTheme;
-      }
-      const changeGiscusTheme = () => {
-        // From: https://github.com/giscus/giscus/issues/336
-        const sendMessage = (message) => {
-          const iframe = document.querySelector('iframe.giscus-frame');
-          if (!iframe) return;
-          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
-        }
-        sendMessage({
-          setConfig: {
-            theme: newTheme
-          }
-        });
-      }
-      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-      if (isGiscussLoaded) {
-        changeGiscusTheme();
-      }
-    };
-    const authorPrefersDark = false;
-    const darkModeDefault = authorPrefersDark;
-      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
-      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
-    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-    // Dark / light mode switch
-    window.quartoToggleColorScheme = () => {
-      // Read the current dark / light value
-      let toAlternate = !hasAlternateSentinel();
-      toggleColorMode(toAlternate);
-      setStyleSentinel(toAlternate);
-      toggleGiscusIfUsed(toAlternate, darkModeDefault);
-      window.dispatchEvent(new Event('resize'));
-    };
-    // Switch to dark mode if need be
-    if (hasAlternateSentinel()) {
-      toggleColorMode(true);
-    } else {
-      toggleColorMode(false);
-    }
-  </script>
+<body class="nav-sidebar docked quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -308,7 +143,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div class="sidebar-title mb-0 py-0">
       <a href="./">JZP</a> 
         <div class="sidebar-tools-main">
-  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
   <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Toggle reader mode">
   <div class="quarto-reader-toggle-btn">
   <i class="bi"></i>
@@ -398,51 +232,96 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
     </ul>
     </div>
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul class="collapse">
+  <li><a href="#welcome" id="toc-welcome" class="nav-link active" data-scroll-target="#welcome">Welcome</a>
+  <ul class="collapse">
+  <li><a href="#team" id="toc-team" class="nav-link" data-scroll-target="#team">Team</a></li>
+  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation">Motivation</a></li>
+  <li><a href="#research-questions" id="toc-research-questions" class="nav-link" data-scroll-target="#research-questions">Research Questions</a></li>
+  <li><a href="#headline-findings" id="toc-headline-findings" class="nav-link" data-scroll-target="#headline-findings">Headline Findings</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
+  <li><a href="#repository-structure" id="toc-repository-structure" class="nav-link" data-scroll-target="#repository-structure">Repository Structure</a></li>
+  <li><a href="#how-to-reproduce" id="toc-how-to-reproduce" class="nav-link" data-scroll-target="#how-to-reproduce">How to Reproduce</a></li>
+  <li><a href="#methods-at-a-glance" id="toc-methods-at-a-glance" class="nav-link" data-scroll-target="#methods-at-a-glance">Methods at a Glance</a></li>
+  <li><a href="#design-conventions" id="toc-design-conventions" class="nav-link" data-scroll-target="#design-conventions">Design Conventions</a></li>
+  <li><a href="#notes-on-limitations" id="toc-notes-on-limitations" class="nav-link" data-scroll-target="#notes-on-limitations">Notes on Limitations</a></li>
+  </ul></li>
+  </ul>
+</nav>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Table of contents</h2>
-   
-  <ul>
-  <li><a href="#welcome" id="toc-welcome" class="nav-link active" data-scroll-target="#welcome">Welcome</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
     </div>
 <!-- main -->
-<main class="content column-body" id="quarto-document-content">
-
+<main class="content column-page-right" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <div class="quarto-title-block"><div><h1 class="title">Capital Without Category</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Governance, Inequality, and the Micro-Enterprise Paradox in Brazil</p>
 </div>
 
 
-
-<div class="quarto-title-meta column-body">
-
-    <div>
-    <div class="quarto-title-meta-heading">Authors</div>
+<div class="quarto-title-meta-author column-page-right">
+  <div class="quarto-title-meta-heading">Authors</div>
+  <div class="quarto-title-meta-heading">Affiliations</div>
+  
     <div class="quarto-title-meta-contents">
-             <p>Zhijun He </p>
-             <p>Jerry Miao </p>
-             <p>Paxton Boyd </p>
-          </div>
+    <p class="author">Zhijun He </p>
   </div>
-    
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Member 1 — Project Lead · Part I author
+          </p>
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Jerry Miao </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Member 2 — Part II author
+          </p>
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Paxton Boyd </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Member 3 — Part III author
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta column-page-right">
+
+      
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">Sunday, April 26, 2026</p>
+      <p class="date">Wednesday, February 25, 2026</p>
     </div>
   </div>
   
     
   </div>
   
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>A three-part exploratory data analysis of Brazil’s CNPJ formal-sector firm registry, examining the limits of revenue-based firm classification when capital ownership and governance structure carry information that revenue alone cannot. Part I establishes that capital concentration is a universal power-law shared across every firm-size tier (Gini &gt; 0.98 everywhere). Part II shows that governance archetype shapes the capital distribution tier-dependently — Beneficial Owners carry the heavy tail at Micro, Managing Partners carry it at Medium/Large. Part III ranks legal-form × governance cells within micros and identifies the partnership-with-passive-equity combination, not EIRELI, as the dominant capital-rich-micro escape route. The combined finding is that revenue alone is a porous targeting instrument for small-business policy.</p>
+  </div>
+</div>
 
+<div>
+  <div class="keywords">
+    <div class="block-title">Keywords</div>
+    <p>exploratory data analysis, inequality, power law, governance, Brazil, CNPJ registry, TidyTuesday</p>
+  </div>
+</div>
 
 </header>
 
@@ -451,28 +330,183 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1>Welcome</h1>
 <p>This website presents our project on governance, inequality, and the micro-enterprise paradox in Brazil.</p>
 <p>Use the sidebar to navigate through our EDA, written analysis, and appendix materials.</p>
+<blockquote class="blockquote">
+<p><strong>TidyTuesday 2026 · Week 4 (Extended)</strong> · February 2026</p>
+</blockquote>
+<section id="team" class="level2">
+<h2 class="anchored" data-anchor-id="team">Team</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 21%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Member</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><strong>Zhijun He</strong></td>
+<td style="text-align: left;">Project synthesis lead (<code>capital_without_category_v3.qmd</code>); author of Part I — <em>The Universal Power Law</em></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">2</td>
+<td style="text-align: left;"><strong>Jerry Miao</strong></td>
+<td style="text-align: left;">Author of Part II — <em>Governance as Distributional Shape</em></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">3</td>
+<td style="text-align: left;"><strong>Paxton Boyd</strong></td>
+<td style="text-align: left;">Author of Part III — <em>The Partnership Channel</em></td>
+</tr>
+</tbody>
+</table>
+<p>The three parts are designed as a connected trilogy: Part I motivates the governance question by establishing universal concentration, Part II identifies the distributional signature of governance archetypes, and Part III zooms into the Micro tier to identify the legal-form channel through which capital-rich firms register as micro-enterprises.</p>
+</section>
+<section id="motivation" class="level2">
+<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
+<p>Brazil’s official firm-size classification (Simples Nacional) is built on a single threshold: <strong>annual gross revenue</strong>. A sole proprietor earning 360,000 BRL is legally a “micro-enterprise” regardless of whether their declared capital stock is 50,000 BRL or 5,000,000 BRL.</p>
+<p>This regulatory choice creates a natural experiment in the CNPJ registry: firms within the same legal category can have wildly different capital endowments. The analytical question this project addresses is whether revenue-based classification successfully targets capital-constrained firms, or whether it is <em>porous</em> — letting capital-rich firms wear the regulatory clothing of micro-enterprises while structurally functioning as something else.</p>
+</section>
+<section id="research-questions" class="level2">
+<h2 class="anchored" data-anchor-id="research-questions">Research Questions</h2>
+<p><strong>Q1 — Within-tier inequality.</strong> Is capital concentration in Brazilian formal-sector firms a feature of the micro-enterprise category specifically, or is the same power-law signature visible across every size tier? <em>(Part I)</em></p>
+<p><strong>Q2 — Governance as distributional predictor.</strong> Conditional on firm size, does owner archetype shape the capital distribution? Is the effect a <em>level shift</em> (governance moves the median), a <em>variance shift</em> (governance moves the tail), or both? <em>(Part II)</em></p>
+<p><strong>Q3 — The capital-rich micro escape route.</strong> Among micro-enterprises with unusually high capital, which combinations of legal form and governance archetype are most associated with capital-rich status? Is the escape a single legal form (the popular EIRELI framing), or a structural combination that no single dimension captures? <em>(Part III)</em></p>
+</section>
+<section id="headline-findings" class="level2">
+<h2 class="anchored" data-anchor-id="headline-findings">Headline Findings</h2>
+<p><strong>Part I — Universal concentration.</strong> Capital concentration is structural to the entire Brazilian formal sector, not specific to micro-enterprises. Every size tier exhibits Gini &gt; 0.98, with the top 1% holding 96–99% of tier capital and the top 0.1% already holding 87–96%. The “capital trap” is not a micro-enterprise pathology but a universal power-law signature shared across regulatory categories.</p>
+<p><strong>Part II — Governance shapes distributions tier-dependently.</strong> Managing Partners are the only archetype whose median capital scales with firm size (300k → 1M from Micro to Medium/Large, a 3.3× increase). Capital tails are heavy in nearly every cell, but <em>which archetype carries the tail shifts with size</em>: Beneficial Owners hold the heaviest tail at Micro (the holding-company- shell signature), while Managing Partners reach an extraordinary 526× mean/ median ratio at Medium/Large (true industry titans). The two heavy tails are structurally different phenomena that should not be conflated.</p>
+<p><strong>Part III — The escape route is a partnership, not an LLC.</strong> Among micro-enterprises, the capital-rich subpopulation (above the 75th-percentile threshold of BRL 500,000) concentrates in <strong>Simple Partnership × Beneficial Owner</strong> (~48%) and <strong>Simple Partnership × Managing Partner</strong> (~42%). The popular framing of EIRELI as the dominant escape vehicle is not what the data show; the partnership-with-passive-equity combination is the fingerprint of holding-company architecture operating through Brazil’s small-business legal infrastructure.</p>
+<p><strong>Combined policy implication.</strong> Revenue alone is a porous targeting instrument. Legal form and governance archetype — both already recorded at registration, available at zero additional reporting cost — carry the missing information needed to distinguish genuinely capital-constrained entrepreneurs from architecturally sophisticated capital-rich firms wearing micro-enterprise clothing.</p>
+</section>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<p><strong>Source.</strong> Brazilian CNPJ Registry, accessed via the TidyTuesday 2026 Week 4 (Extended) release.</p>
+<p><strong>Scope.</strong> All firms with non-missing capital stock, firm size, and owner qualification, distributed across three size tiers (Micro / Small / Medium–Large).</p>
+<p><strong>Cleaning conventions.</strong> Records with missing or non-positive capital stock, missing firm size, or missing owner qualification are excluded. Capital stock is log-transformed for distributional analysis. Reported zero capital is treated as a registry-coding artefact (entities awaiting capital declaration post-registration) rather than as a genuinely zero-capital firm.</p>
+<p><strong>Key derived variables.</strong></p>
+<ul>
+<li><code>size</code> — three-tier firm size (Micro / Small / Medium–Large), recoded from the original <code>company_size</code> field</li>
+<li><code>governance</code> — three-archetype owner classification (Sole Entrepreneur / Managing Partner / Beneficial Owner) plus an “Other” residual, derived from the <code>owner_qualification</code> field via regex matching</li>
+<li><code>legal_short</code> — abbreviated legal-form classification (LLC / Sole Proprietorship / EIRELI / Simple Partnership / Silent Partnership / Corporation)</li>
+<li><code>is_capital_rich_micro</code> — Boolean flag for Micro-tier firms above the 75th percentile of micro-tier capital (≈ BRL 500,000)</li>
+</ul>
+</section>
+<section id="repository-structure" class="level2">
+<h2 class="anchored" data-anchor-id="repository-structure">Repository Structure</h2>
+<pre><code>.
+├── README.qmd                        (this file)
+│
+├── capital_without_category_v3.qmd   # Unified synthesis (Zhijun He)
+│                                     # Combines all three parts into a single
+│                                     # narrative under shared design conventions
+│
+├── eda-member1.qmd                   # Part I — The Universal Power Law
+│                                     # (Zhijun He)
+│
+├── eda-member2.qmd                   # Part II — Governance as Distributional Shape
+│                                     # (Jerry Miao)
+│
+└── eda-member3.qmd                   # Part III — The Partnership Channel
+                                      # (Paxton Boyd)</code></pre>
+<p>Each <code>eda-memberN.qmd</code> file is a self-contained Quarto document with its own data ingestion, analysis, methodological notes, and interpretation, and can be rendered independently. The unified <code>capital_without_category_v3.qmd</code> merges the three parts into a single document.</p>
+</section>
+<section id="how-to-reproduce" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-reproduce">How to Reproduce</h2>
+<section id="requirements" class="level3">
+<h3 class="anchored" data-anchor-id="requirements">Requirements</h3>
+<ul>
+<li>R ≥ 4.2</li>
+<li>Quarto ≥ 1.4</li>
+<li>R packages: <code>tidyverse</code>, <code>scales</code>, <code>patchwork</code>, <code>gt</code>
+<ul>
+<li>Additionally for Part I: <code>boot</code> (bootstrap Gini CIs)</li>
+<li>The shared <code>theme_cwc()</code> design system uses base ggplot2 only</li>
+</ul></li>
+</ul>
+</section>
+<section id="build-any-individual-part" class="level3">
+<h3 class="anchored" data-anchor-id="build-any-individual-part">Build any individual part</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render eda-member1.qmd        <span class="co"># Part I (Power law)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render eda-member2.qmd        <span class="co"># Part II (Governance)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render eda-member3.qmd        <span class="co"># Part III (Escape route)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="build-the-unified-synthesis" class="level3">
+<h3 class="anchored" data-anchor-id="build-the-unified-synthesis">Build the unified synthesis</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render capital_without_category_v3.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first render downloads the CNPJ data from the TidyTuesday GitHub repository; subsequent renders use Quarto’s <code>cache: true</code> to skip re-fetching. All four documents are rendered to standalone HTML with <code>code-fold: true</code> so prose appears first and code is available on demand.</p>
+</section>
+</section>
+<section id="methods-at-a-glance" class="level2">
+<h2 class="anchored" data-anchor-id="methods-at-a-glance">Methods at a Glance</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 40%">
+<col style="width: 46%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Part</th>
+<th>Statistical method</th>
+<th>Primary visualization</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>I</td>
+<td>Bootstrap Gini 95% CIs (B = 1,000); rank-bucket decomposition (top 1% / next 9% / next 40% / bottom 50%)</td>
+<td>Two-panel: discrete log-rank concentration ladder + stacked share decomposition</td>
+</tr>
+<tr class="even">
+<td>II</td>
+<td>Kruskal–Wallis non-parametric tests within each size tier</td>
+<td>Two-panel: median trajectory with IQR (P25–P75) and P10–P90 whiskers + mean ÷ median ratio on log y-axis</td>
+</tr>
+<tr class="odd">
+<td>III</td>
+<td>Wilson 95% CIs on cell-level escape rates; Pearson χ² test of legal-form × capital-rich independence</td>
+<td>Horizontal bar ranking of legal-form × governance cell escape rates with Wilson confidence intervals</td>
+</tr>
+</tbody>
+</table>
+<p>Methodological choices that were deliberately <em>not</em> used and the reasons are documented in each part’s “Methodological Notes” section: ANOVA (replaced by Kruskal–Wallis given heavy-tailed distributions), full Theil decomposition (uninformative when between-tier variance is dominated by within-tier), quantile regression (the trajectory + ratio design communicates the same finding more directly), and logistic regression (cell-level visualization preserves the legal-form × governance interaction more transparently).</p>
+</section>
+<section id="design-conventions" class="level2">
+<h2 class="anchored" data-anchor-id="design-conventions">Design Conventions</h2>
+<p>All four documents share a unified visual identity to make figures portable across parts:</p>
+<ul>
+<li><strong>Palette.</strong> Terracotta (<code>#c3553a</code>) / amber (<code>#d9a441</code>) / deep teal (<code>#2a5a6b</code>) for size tiers; amber / slate blue (<code>#5b8a9a</code>) / deep navy (<code>#1d3557</code>) for governance archetypes</li>
+<li><strong>Theme.</strong> Custom <code>theme_cwc()</code> extends <code>theme_minimal()</code> with consistent typography (deep-navy titles, grey-tone subtitles), panel grid weight, and panel spacing</li>
+<li><strong>Caption.</strong> Unified caption template with team name and date</li>
+<li><strong>Code style.</strong> All chunks labelled, all figures captioned, all tables built with <code>gt</code> for publication-quality output</li>
+</ul>
+</section>
+<section id="notes-on-limitations" class="level2">
+<h2 class="anchored" data-anchor-id="notes-on-limitations">Notes on Limitations</h2>
+<ul>
+<li>This is a <strong>descriptive</strong> analysis. We do not estimate causal effects; we identify cross-sectional structural patterns in the registry.</li>
+<li>The “capital-rich micro” threshold (75th percentile within micros, ≈ BRL 500,000) is descriptive, not normative. A sensitivity check at the 80th and 90th percentile cutoffs preserves the cell ranking.</li>
+<li>Mean ÷ median ratios at small tiers (Medium/Large in particular) are sensitive to a small number of extreme outliers. Qualitative rankings are robust; specific magnitudes should be read as order-of-magnitude indicators.</li>
+<li>We cannot distinguish whether capital-rich micros choose partnership form <em>because</em> they have capital (selection on capacity) or acquire capital <em>because</em> they chose partnership form (legal-form-as-channel). Distinguishing these requires panel data or a registration-reform discontinuity, neither of which the CNPJ snapshot supports.</li>
+</ul>
 
 
 <!-- -->
 
 </section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
-    // Ensure there is a toggle, if there isn't float one in the top right
-    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-      const a = window.document.createElement('a');
-      a.classList.add('top-right');
-      a.classList.add('quarto-color-scheme-toggle');
-      a.href = "";
-      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-      const i = window.document.createElement("i");
-      i.classList.add('bi');
-      a.appendChild(i);
-      window.document.body.appendChild(a);
-    }
-    setColorSchemeToggle(hasAlternateSentinel())
     const icon = "";
     const anchorJS = new window.AnchorJS();
     anchorJS.options = {
@@ -922,7 +956,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script>
-<nav class="page-navigation column-body">
+<nav class="page-navigation column-page-right">
   <div class="nav-page nav-page-previous">
   </div>
   <div class="nav-page nav-page-next">
@@ -931,15 +965,267 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Capital Without Category"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu"># Welcome</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>This website presents our project on governance, inequality, and the micro-enterprise paradox in Brazil.</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Use the sidebar to navigate through our EDA, written analysis, and appendix materials.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Capital Without Category"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Governance, Inequality, and the Micro-Enterprise Paradox in Brazil"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">  - name: "Zhijun He"</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">    affiliation: "Member 1 — Project Lead · Part I author"</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">  - name: "Jerry Miao"</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">    affiliation: "Member 2 — Part II author"</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">  - name: "Paxton Boyd"</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">    affiliation: "Member 3 — Part III author"</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-02-25"</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="an">abstract:</span><span class="co"> |</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">  A three-part exploratory data analysis of Brazil's CNPJ formal-sector firm</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">  registry, examining the limits of revenue-based firm classification when</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">  capital ownership and governance structure carry information that revenue</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">  alone cannot. Part I establishes that capital concentration is a universal</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">  power-law shared across every firm-size tier (Gini &gt; 0.98 everywhere). Part</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">  II shows that governance archetype shapes the capital distribution</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">  tier-dependently — Beneficial Owners carry the heavy tail at Micro, Managing</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">  Partners carry it at Medium/Large. Part III ranks legal-form × governance</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">  cells within micros and identifies the partnership-with-passive-equity</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">  combination, not EIRELI, as the dominant capital-rich-micro escape route.</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">  The combined finding is that revenue alone is a porous targeting instrument</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">  for small-business policy.</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">    theme: cosmo</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 2</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-location: left</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co">    fig-align: center</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co">    df-print: paged</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co">  gfm:</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">    preview-mode: raw</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: false</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="an">keywords:</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">  - exploratory data analysis</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">  - inequality</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">  - power law</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">  - governance</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">  - Brazil</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co">  - CNPJ registry</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co">  - TidyTuesday</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="fu"># Welcome</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>This website presents our project on governance, inequality, and the micro-enterprise paradox in Brazil.</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>Use the sidebar to navigate through our EDA, written analysis, and appendix materials.</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; **TidyTuesday 2026 · Week 4 (Extended)** · February 2026</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Team</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Member <span class="pp">|</span> Name <span class="pp">|</span> Contribution <span class="pp">|</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|:------:|:-----|:-------------|</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> **Zhijun He** <span class="pp">|</span> Project synthesis lead (<span class="in">`capital_without_category_v3.qmd`</span>); author of Part I — *The Universal Power Law* <span class="pp">|</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> **Jerry Miao** <span class="pp">|</span> Author of Part II — *Governance as Distributional Shape* <span class="pp">|</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> **Paxton Boyd** <span class="pp">|</span> Author of Part III — *The Partnership Channel* <span class="pp">|</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>The three parts are designed as a connected trilogy: Part I motivates the</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>governance question by establishing universal concentration, Part II identifies</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>the distributional signature of governance archetypes, and Part III zooms into</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>the Micro tier to identify the legal-form channel through which capital-rich</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>firms register as micro-enterprises.</span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="fu">## Motivation</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>Brazil's official firm-size classification (Simples Nacional) is built on a</span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>single threshold: **annual gross revenue**. A sole proprietor earning 360,000</span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>BRL is legally a "micro-enterprise" regardless of whether their declared</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>capital stock is 50,000 BRL or 5,000,000 BRL.</span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>This regulatory choice creates a natural experiment in the CNPJ registry: firms</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>within the same legal category can have wildly different capital endowments.</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>The analytical question this project addresses is whether revenue-based</span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>classification successfully targets capital-constrained firms, or whether it is</span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>*porous* — letting capital-rich firms wear the regulatory clothing of</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>micro-enterprises while structurally functioning as something else.</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="fu">## Research Questions</span></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>**Q1 — Within-tier inequality.** Is capital concentration in Brazilian</span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>formal-sector firms a feature of the micro-enterprise category specifically, or</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>is the same power-law signature visible across every size tier? *(Part I)*</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>**Q2 — Governance as distributional predictor.** Conditional on firm size, does</span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>owner archetype shape the capital distribution? Is the effect a *level shift*</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>(governance moves the median), a *variance shift* (governance moves the tail),</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>or both? *(Part II)*</span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>**Q3 — The capital-rich micro escape route.** Among micro-enterprises with</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>unusually high capital, which combinations of legal form and governance</span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>archetype are most associated with capital-rich status? Is the escape a single</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>legal form (the popular EIRELI framing), or a structural combination that no</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>single dimension captures? *(Part III)*</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="fu">## Headline Findings</span></span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>**Part I — Universal concentration.** Capital concentration is structural to</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>the entire Brazilian formal sector, not specific to micro-enterprises. Every</span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>size tier exhibits Gini &gt; 0.98, with the top 1% holding 96–99% of tier capital</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>and the top 0.1% already holding 87–96%. The "capital trap" is not a</span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>micro-enterprise pathology but a universal power-law signature shared across</span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>regulatory categories.</span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>**Part II — Governance shapes distributions tier-dependently.** Managing</span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>Partners are the only archetype whose median capital scales with firm size</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>(300k → 1M from Micro to Medium/Large, a 3.3× increase). Capital tails are</span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>heavy in nearly every cell, but *which archetype carries the tail shifts with</span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a>size*: Beneficial Owners hold the heaviest tail at Micro (the holding-company-</span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a>shell signature), while Managing Partners reach an extraordinary 526× mean/</span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a>median ratio at Medium/Large (true industry titans). The two heavy tails are</span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>structurally different phenomena that should not be conflated.</span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>**Part III — The escape route is a partnership, not an LLC.** Among</span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>micro-enterprises, the capital-rich subpopulation (above the 75th-percentile</span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a>threshold of BRL 500,000) concentrates in **Simple Partnership × Beneficial</span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a>Owner** (~48%) and **Simple Partnership × Managing Partner** (~42%). The</span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>popular framing of EIRELI as the dominant escape vehicle is not what the data</span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a>show; the partnership-with-passive-equity combination is the fingerprint of</span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a>holding-company architecture operating through Brazil's small-business legal</span>
+<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a>infrastructure.</span>
+<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a>**Combined policy implication.** Revenue alone is a porous targeting</span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a>instrument. Legal form and governance archetype — both already recorded at</span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a>registration, available at zero additional reporting cost — carry the missing</span>
+<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a>information needed to distinguish genuinely capital-constrained entrepreneurs</span>
+<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>from architecturally sophisticated capital-rich firms wearing micro-enterprise</span>
+<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a>clothing.</span>
+<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data</span></span>
+<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>**Source.** Brazilian CNPJ Registry, accessed via the TidyTuesday 2026 Week 4</span>
+<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a>(Extended) release.</span>
+<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a>**Scope.** All firms with non-missing capital stock, firm size, and owner</span>
+<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a>qualification, distributed across three size tiers (Micro / Small /</span>
+<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a>Medium–Large).</span>
+<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a>**Cleaning conventions.** Records with missing or non-positive capital stock,</span>
+<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a>missing firm size, or missing owner qualification are excluded. Capital stock</span>
+<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a>is log-transformed for distributional analysis. Reported zero capital is</span>
+<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a>treated as a registry-coding artefact (entities awaiting capital declaration</span>
+<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a>post-registration) rather than as a genuinely zero-capital firm.</span>
+<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>**Key derived variables.**</span>
+<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`size`</span> — three-tier firm size (Micro / Small / Medium–Large), recoded from</span>
+<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a>  the original <span class="in">`company_size`</span> field</span>
+<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`governance`</span> — three-archetype owner classification (Sole Entrepreneur /</span>
+<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a>  Managing Partner / Beneficial Owner) plus an "Other" residual, derived from</span>
+<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a>  the <span class="in">`owner_qualification`</span> field via regex matching</span>
+<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`legal_short`</span> — abbreviated legal-form classification (LLC / Sole</span>
+<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a>  Proprietorship / EIRELI / Simple Partnership / Silent Partnership /</span>
+<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a>  Corporation)</span>
+<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`is_capital_rich_micro`</span> — Boolean flag for Micro-tier firms above the 75th</span>
+<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a>  percentile of micro-tier capital (≈ BRL 500,000)</span>
+<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a><span class="fu">## Repository Structure</span></span>
+<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a><span class="in">.</span></span>
+<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a><span class="in">├── README.qmd                        (this file)</span></span>
+<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a><span class="in">│</span></span>
+<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a><span class="in">├── capital_without_category_v3.qmd   # Unified synthesis (Zhijun He)</span></span>
+<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a><span class="in">│                                     # Combines all three parts into a single</span></span>
+<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a><span class="in">│                                     # narrative under shared design conventions</span></span>
+<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a><span class="in">│</span></span>
+<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a><span class="in">├── eda-member1.qmd                   # Part I — The Universal Power Law</span></span>
+<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a><span class="in">│                                     # (Zhijun He)</span></span>
+<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a><span class="in">│</span></span>
+<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a><span class="in">├── eda-member2.qmd                   # Part II — Governance as Distributional Shape</span></span>
+<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a><span class="in">│                                     # (Jerry Miao)</span></span>
+<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a><span class="in">│</span></span>
+<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a><span class="in">└── eda-member3.qmd                   # Part III — The Partnership Channel</span></span>
+<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a><span class="in">                                      # (Paxton Boyd)</span></span>
+<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a>Each <span class="in">`eda-memberN.qmd`</span> file is a self-contained Quarto document with its own</span>
+<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a>data ingestion, analysis, methodological notes, and interpretation, and can be</span>
+<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a>rendered independently. The unified <span class="in">`capital_without_category_v3.qmd`</span> merges</span>
+<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>the three parts into a single document.</span>
+<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a><span class="fu">## How to Reproduce</span></span>
+<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a><span class="fu">### Requirements</span></span>
+<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-191"><a href="#cb4-191" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>R ≥ 4.2</span>
+<span id="cb4-192"><a href="#cb4-192" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Quarto ≥ 1.4</span>
+<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>R packages: <span class="in">`tidyverse`</span>, <span class="in">`scales`</span>, <span class="in">`patchwork`</span>, <span class="in">`gt`</span></span>
+<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Additionally for Part I: <span class="in">`boot`</span> (bootstrap Gini CIs)</span>
+<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>The shared <span class="in">`theme_cwc()`</span> design system uses base ggplot2 only</span>
+<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a><span class="fu">### Build any individual part</span></span>
+<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render eda-member1.qmd        <span class="co"># Part I (Power law)</span></span>
+<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render eda-member2.qmd        <span class="co"># Part II (Governance)</span></span>
+<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render eda-member3.qmd        <span class="co"># Part III (Escape route)</span></span>
+<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a><span class="fu">### Build the unified synthesis</span></span>
+<span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-207"><a href="#cb4-207" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render capital_without_category_v3.qmd</span>
+<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a>The first render downloads the CNPJ data from the TidyTuesday GitHub repository;</span>
+<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a>subsequent renders use Quarto's <span class="in">`cache: true`</span> to skip re-fetching. All four</span>
+<span id="cb4-213"><a href="#cb4-213" aria-hidden="true" tabindex="-1"></a>documents are rendered to standalone HTML with <span class="in">`code-fold: true`</span> so prose</span>
+<span id="cb4-214"><a href="#cb4-214" aria-hidden="true" tabindex="-1"></a>appears first and code is available on demand.</span>
+<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a><span class="fu">## Methods at a Glance</span></span>
+<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Part <span class="pp">|</span> Statistical method <span class="pp">|</span> Primary visualization <span class="pp">|</span></span>
+<span id="cb4-219"><a href="#cb4-219" aria-hidden="true" tabindex="-1"></a><span class="pp">|------|-------------------|----------------------|</span></span>
+<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> I    <span class="pp">|</span> Bootstrap Gini 95% CIs (B = 1,000); rank-bucket decomposition (top 1% / next 9% / next 40% / bottom 50%) <span class="pp">|</span> Two-panel: discrete log-rank concentration ladder + stacked share decomposition <span class="pp">|</span></span>
+<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> II   <span class="pp">|</span> Kruskal–Wallis non-parametric tests within each size tier <span class="pp">|</span> Two-panel: median trajectory with IQR (P25–P75) and P10–P90 whiskers + mean ÷ median ratio on log y-axis <span class="pp">|</span></span>
+<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> III  <span class="pp">|</span> Wilson 95% CIs on cell-level escape rates; Pearson χ² test of legal-form × capital-rich independence <span class="pp">|</span> Horizontal bar ranking of legal-form × governance cell escape rates with Wilson confidence intervals <span class="pp">|</span></span>
+<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a>Methodological choices that were deliberately *not* used and the reasons are</span>
+<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a>documented in each part's "Methodological Notes" section: ANOVA (replaced by</span>
+<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>Kruskal–Wallis given heavy-tailed distributions), full Theil decomposition</span>
+<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a>(uninformative when between-tier variance is dominated by within-tier),</span>
+<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a>quantile regression (the trajectory + ratio design communicates the same</span>
+<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a>finding more directly), and logistic regression (cell-level visualization</span>
+<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>preserves the legal-form × governance interaction more transparently).</span>
+<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a><span class="fu">## Design Conventions</span></span>
+<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a>All four documents share a unified visual identity to make figures portable</span>
+<span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a>across parts:</span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Palette.** Terracotta (<span class="in">`#c3553a`</span>) / amber (<span class="in">`#d9a441`</span>) / deep teal</span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`#2a5a6b`</span>) for size tiers; amber / slate blue (<span class="in">`#5b8a9a`</span>) / deep navy</span>
+<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`#1d3557`</span>) for governance archetypes</span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Theme.** Custom <span class="in">`theme_cwc()`</span> extends <span class="in">`theme_minimal()`</span> with consistent</span>
+<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a>  typography (deep-navy titles, grey-tone subtitles), panel grid weight,</span>
+<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a>  and panel spacing</span>
+<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Caption.** Unified caption template with team name and date</span>
+<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Code style.** All chunks labelled, all figures captioned, all tables built</span>
+<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a>  with <span class="in">`gt`</span> for publication-quality output</span>
+<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notes on Limitations</span></span>
+<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-249"><a href="#cb4-249" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>This is a **descriptive** analysis. We do not estimate causal effects; we</span>
+<span id="cb4-250"><a href="#cb4-250" aria-hidden="true" tabindex="-1"></a>  identify cross-sectional structural patterns in the registry.</span>
+<span id="cb4-251"><a href="#cb4-251" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The "capital-rich micro" threshold (75th percentile within micros, ≈ BRL</span>
+<span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a>  500,000) is descriptive, not normative. A sensitivity check at the 80th and</span>
+<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a>  90th percentile cutoffs preserves the cell ranking.</span>
+<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Mean ÷ median ratios at small tiers (Medium/Large in particular) are</span>
+<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a>  sensitive to a small number of extreme outliers. Qualitative rankings are</span>
+<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a>  robust; specific magnitudes should be read as order-of-magnitude indicators.</span>
+<span id="cb4-257"><a href="#cb4-257" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>We cannot distinguish whether capital-rich micros choose partnership form</span>
+<span id="cb4-258"><a href="#cb4-258" aria-hidden="true" tabindex="-1"></a>  *because* they have capital (selection on capacity) or acquire capital</span>
+<span id="cb4-259"><a href="#cb4-259" aria-hidden="true" tabindex="-1"></a>  *because* they chose partnership form (legal-form-as-channel). Distinguishing</span>
+<span id="cb4-260"><a href="#cb4-260" aria-hidden="true" tabindex="-1"></a>  these requires panel data or a registration-reform discontinuity, neither of</span>
+<span id="cb4-261"><a href="#cb4-261" aria-hidden="true" tabindex="-1"></a>  which the CNPJ snapshot supports.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
