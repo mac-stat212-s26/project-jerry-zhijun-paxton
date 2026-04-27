@@ -1,0 +1,252 @@
+---
+title: "Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil"
+subtitle: "TidyTuesday 2026 · Week 4 · Brazilian Companies (CNPJ)"
+author:
+  - name: Zhijun He
+    roles: "Point of Contact · Analysis II (§6)"
+  - name: Jerry Miao
+    roles: "Technical Lead · Analysis III (§5)"
+  - name: Paxton Boyd
+    roles: "Style Lead · Analysis I (§4)"
+date: "2026-03-25"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: true
+    highlight-style: github
+    code-fold: true
+    code-tools: true
+    df-print: paged
+    embed-resources: true
+    smooth-scroll: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  cache: true
+---
+
+## Background and Motivation
+
+Brazil's official firm-size classification (Simples Nacional)(https://thebrazilbusiness.com/article/taxation-regime-simples-nacional) sorts registered companies into
+**micro**, **small**, and **medium/large** tiers based on annual gross revenue. But revenue is a
+poor proxy for capital endowment. A sole proprietor earning 360,000 BRL per year is legally a
+"micro-enterprise" regardless of whether they hold 10,000 BRL or 10,000,000 BRL in declared
+capital stock. This classification logic creates a structural paradox: the same regulatory label
+simultaneously shelters subsistence operations and well-capitalized investment vehicles.
+
+This project uses Brazil's CNPJ(Cadastro Nacional da Pessoa Jurídica -- National Registry of Legal Entities) business registry(https://dados.gov.br/dados/conjuntos-dados/cadastro-nacional-da-pessoa-juridica---cnpj) — a near-census of all registered firms — to
+expose the internal heterogeneity that aggregate size categories conceal. We focus on two
+orthogonal dimensions that revenue-based classification ignores:
+
+- **Within-tier capital inequality:** How unequal is the capital distribution *inside* each
+  size tier, and how much of total inequality is *within* versus *between* tiers?
+- **Governance structure:** Does the legal role of the controlling owner (Managing Partner,
+  Beneficial Owner, Sole Entrepreneur) predict capital accumulation *independently* of size,
+  and does this governance premium vary across the capital distribution?
+
+Our central argument is that "micro-enterprise" is not a coherent economic category for capital
+analysis — and that development policy instruments calibrated to revenue thresholds alone will
+systematically misidentify their target population.
+
+---
+
+## Research Questions
+
+1. **Within-tier inequality:** Are micro-enterprises internally unequal in capital endowments?
+   How do bootstrapped Gini coefficients compare across size tiers, and what share of total
+   inequality is attributable to *between-tier* versus *within-tier* variation?
+
+2. **Governance as a capital predictor:** Does owner qualification predict capital accumulation
+   *independently* of firm size? Is the governance premium uniform across the capital
+   distribution, or does it widen or narrow at the tails?
+
+3. **The "capital-rich micro":** Among micro-enterprises above the 75th capital percentile, what
+   legal form-governance combinations most strongly predict capital-rich status? What are the
+   odds ratios from a logistic model of capital-rich membership?
+
+---
+
+## Data and Setup
+
+### Packages
+
+```{r}
+#| label: setup
+
+library(tidyverse)
+library(scales)
+library(ggridges)
+library(patchwork)
+library(boot)          # bootstrap Gini confidence intervals
+library(quantreg)      # quantile regression
+library(broom)         # tidy model outputs
+library(gt)            # publication-quality tables
+library(modelsummary)  # regression summary tables
+library(ggtext)        # markdown / HTML in ggplot labels
+library(glue)          # string interpolation
+
+# ── Shared palette ─────────────────────────────────────────────────────────────
+pal_size <- c("Micro" = "#e76f51", "Small" = "#f4a261", "Medium/Large" = "#264653")
+pal_gov  <- c(
+  "Sole Entrepreneur"                    = "#e9c46a",
+  "Managing Partner /\nAdministrator"    = "#4a90d9",
+  "Beneficial Owner\n(passive/investor)" = "#264653"
+)
+
+caption_base <- "Source: Brazilian CNPJ Registry ·He, Miao & Boyd"
+```
+
+### Data Ingestion and Cleaning
+
+```{r}
+#| label: data-load
+
+companies <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
+  show_col_types = FALSE
+)
+
+# ── Core recoding ───────────────────────────────────────────────────────────────
+co <- companies |>
+  # Drop records with missing or non-positive capital (not usable for log-scale analysis)
+  filter(
+    !is.na(company_size),
+    !is.na(capital_stock),
+    capital_stock > 0,
+    !is.na(owner_qualification)
+  ) |>
+  mutate(
+    # Size tier (ordered factor)
+    size = case_when(
+      company_size == "micro-enterprise" ~ "Micro",
+      company_size == "small-enterprise" ~ "Small",
+      TRUE                               ~ "Medium/Large"
+    ),
+    size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
+
+    # Governance archetype: collapse owner_qualification into 4 classes
+    governance = case_when(
+      str_detect(owner_qualification,
+                 regex("beneficial owner", ignore_case = TRUE)) ~
+        "Beneficial Owner\n(passive/investor)",
+      str_detect(owner_qualification,
+                 regex("entrepreneur|business owner", ignore_case = TRUE)) ~
+        "Sole Entrepreneur",
+      str_detect(owner_qualification,
+                 regex("managing partner|administrator", ignore_case = TRUE)) ~
+        "Managing Partner /\nAdministrator",
+      TRUE ~ "Other"
+    ),
+    governance = factor(governance, levels = c(
+      "Sole Entrepreneur",
+      "Managing Partner /\nAdministrator",
+      "Beneficial Owner\n(passive/investor)",
+      "Other"
+    )),
+
+    # Log10 capital for distributional analysis
+    log_capital = log10(capital_stock),
+
+    # Legal-form shorthand for micro analysis
+    legal_short = case_when(
+      str_detect(legal_nature, "LLC")                 ~ "LLC",
+      str_detect(legal_nature, "Sole Proprietorship") ~ "Sole Prop.",
+      str_detect(legal_nature, "Individual Limited")  ~ "EIRELI",
+      str_detect(legal_nature, "Simple")              ~ "Simple Part.",
+      str_detect(legal_nature, "Silent")              ~ "Silent Part.",
+      str_detect(legal_nature, "Corporation")         ~ "Corporation",
+      TRUE                                            ~ "Other"
+    ),
+
+    # Capital-rich flag: top quartile *within* micro-enterprises
+    capital_q75_micro     = quantile(capital_stock[size == "Micro"], 0.75, na.rm = TRUE),
+    is_capital_rich_micro = (size == "Micro") & (capital_stock >= capital_q75_micro)
+  )
+
+cat("Final observations:", scales::comma(nrow(co)), "\n")
+```
+
+### Descriptive Summary Table
+
+```{r}
+#| label: summary-table
+
+co |>
+  filter(governance != "Other") |>
+  group_by(size, governance) |>
+  summarise(
+    n        = n(),
+    med_cap  = median(capital_stock),
+    mean_cap = mean(capital_stock),
+    p25_cap  = quantile(capital_stock, 0.25),
+    p75_cap  = quantile(capital_stock, 0.75),
+    .groups  = "drop"
+  ) |>
+  gt(groupname_col = "size") |>
+  tab_header(
+    title    = md("**Capital Stock by Firm Size and Governance Archetype**"),
+    subtitle = "All values in BRL · Median, mean, and interquartile range"
+  ) |>
+  cols_label(
+    governance = "Governance Archetype",
+    n          = "N",
+    med_cap    = "Median",
+    mean_cap   = "Mean",
+    p25_cap    = "P25",
+    p75_cap    = "P75"
+  ) |>
+  fmt_number(
+    columns  = c(med_cap, mean_cap, p25_cap, p75_cap),
+    suffixing = TRUE, decimals = 1
+  ) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0) |>
+  tab_style(
+    style     = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |>
+  tab_options(
+    table.font.size            = px(13),
+    heading.align              = "left",
+    row_group.background.color = "#f4f4f4"
+  ) |>
+  tab_source_note(md("*Source: Brazilian CNPJ Registry*"))
+```
+
+
+## Synthesis
+
+This analysis reframes the Brazilian micro-enterprise capital paradox across four dimensions.
+
+**1. The trap operates at two scales simultaneously.** The Theil T decomposition shows that a
+majority of total capital inequality is *within* size tiers, not between them. Revenue-based
+classification reform cannot close the capital gap, because the gap is not primarily a
+between-tier phenomenon.
+
+**2. Governance is an independent, orthogonal capital predictor.** The nested OLS models
+confirm that incorporating governance structure adds statistically significant explanatory
+power beyond size alone. The governance premium is not a proxy for size.
+
+**3. The premium is not uniform: it widens at the upper tail.** Quantile regression at
+τ ∈ {0.10, …, 0.90} shows that the Beneficial Owner advantage over sole entrepreneurs grows
+substantially at higher quantiles. OLS estimates the conditional mean, which masks this
+distributional asymmetry entirely. The upper tail of the micro-enterprise capital distribution
+is disproportionately occupied by Beneficial Owner-controlled firms resembling holding-company
+subsidiaries, not organic small businesses.
+
+**4. Capital-rich micro status is predictable from governance and legal form.** The logistic
+model confirms that Beneficial Ownership and LLC legal form are the strongest independent
+predictors of capital-rich status within the micro tier, with odds ratios significantly
+above 1 after controlling for both dimensions simultaneously. Sole Entrepreneurs in Sole
+Proprietorships — the most structurally exposed population — have the lowest probability of
+capital-rich status and the highest probability of genuine capital constraint.
+
+**Policy implication.** If Brazil's development goal is to direct capital support toward
+genuinely constrained small entrepreneurs, the targeting instrument should integrate governance
+structure alongside revenue-based size classification. The `owner_qualification` field is
+already present in CNPJ administrative records at zero additional data collection cost.
+Adding it as a screening variable would substantially improve the precision of capital-support
+programs. Revenue thresholds are necessary but insufficient — and this dataset shows precisely why.

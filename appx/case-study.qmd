@@ -1,5 +1,52 @@
 ---
-title: "Case Study"
+title: "Case Study" 
 ---
 
-Your case study go here.
+# Case Study: *Uber Is Taking Millions Of Manhattan Rides Away From Taxis*
+
+## Source
+
+Fischer-Baum, Reuben, and Carl Bialik. 2015.  
+*Uber Is Taking Millions Of Manhattan Rides Away From Taxis.*  
+FiveThirtyEight.  
+https://fivethirtyeight.com/features/uber-is-taking-millions-of-manhattan-rides-away-from-taxis/
+
+## What is the data story?
+
+The Story the article revealed is that Uber’s growth in New York City did not simply add more total rides on top of the existing taxi system. However, in Manhattan especially, Uber appears to have taken millions of rides away from taxis. The article expressed a common concern that Uber was directly increasing congestion by showing that many of Uber’s gains were matched by taxi losses.}
+
+## How the report unfolds the story
+
+The report unfolds in a very efficient way. First, the title and subtitle state the structure of the story very clearly, so readers can understand what the article is going to talk about. Then the article gives political and policy context by explaining concerns about congestion and the debate over Uber’s impact in New York City. This leads to why this analysis matters.
+
+Secondly, the story introduces a simple comparison of pickup counts between years 2014 and 2015. Very easy to understand concept: Uber pickups rise sharply, yellow taxi pickups fall, and the total number of pickups changes only slightly. So the demand for ride is still there. Then the first chart works as the foundation of the entire story because it introduces the idea of substitution rather than pure growth in rides.
+
+After that, the article becomes more detailed by asking where the changes happened. The maps are important because they move the argument from a citywide summary to a geographic explanation. They show that in Manhattan’s core area, Uber gains closely match taxi losses, while in outer boroughs both services sometimes increase. This adds spatial depth to the claim and helps readers see that Uber’s role differs by location.
+
+Then the report then uses a scatterplot to make the strongest analytical point relationship wise. By comparing the change in Uber pickups to the change in taxi pickups across Manhattan taxi zones, the visualization shows a strong negative relationship. This supports the idea that Uber was replacing taxi rides on something close to a one-to-one basis in many places.
+
+Finally, the article includes limitations and exceptions. It explains that pickup counts do not capture the full picture of congestion because they do not include trip length, dropoffs, or all competing services. That ending is effective because it strengthens credibility. The article still makes a strong claim, but it avoids pretending the data proves more than it actually can.
+
+## What is effective?
+
+The narrative structure of the story is very strong. It does not just present a collection of charts. Instead, it starts with a broad claim, gives context, presents simple evidence first, then gradually builds toward more detailed and convincing visual support. That makes the story very easy to follow.
+
+Another strength is the progression of visual complexity. The report begins with a basic comparison chart, then moves to maps, and finally to a more analytical scatterplot. This sequence helps readers build understanding step by step instead of overwhelming them all at once.
+
+The visualizations are also tightly connected to the argument. Each one answers a specific question. The early chart answers whether total pickups increased much. The maps answer where the changes happened. The scatterplot answers how closely Uber gains matched taxi losses. Because every figure has a purpose, the report feels focused and persuasive.
+
+A final strength is that the article balances confidence with caution. It makes a strong argument, but it also acknowledges what the data cannot show. That makes the overall story more trustworthy. 
+
+## What could be improved?
+
+One limitation is that the article want to show causation but is limited to only correlation. The evidence strongly suggests that Uber replaced taxi rides, but the report cannot fully prove that Uber alone caused the taxi decline.
+
+Another weakness is that pickup counts are only a partial measure of congestion. Congestion depends on more than just how many rides begin. It also depends on trip length, driving patterns between fares, dropoff locations, and the number of other vehicles on the road. The article admits this, but it is still an important limitation.
+
+The report could also be improved by including a longer time span. Comparing only 2014 and 2015 gives a useful snapshot, but a multi-year trend would make the argument even stronger and help show whether this was a short-term shift or a stable long-term pattern.
+
+Finally, some readers could find the scatterplot harder to interpret than the earlier charts. It is analytically strong, but it requires more statistical reading skill than the simpler visuals.
+
+## Takeaway
+
+This case study is a strong example of data storytelling because it combines a clear claim, purposeful visualizations, and a logical progression of evidence. The article does not simply show data; it guides the reader through a sequence of questions and answers. That structure makes the final conclusion persuasive: in Manhattan, Uber appears to have replaced many taxi rides rather than substantially increasing the total number of pickups. This is a useful model for building our own project narrative, where charts should appear in an order that helps readers move from basic context to deeper interpretation. 
