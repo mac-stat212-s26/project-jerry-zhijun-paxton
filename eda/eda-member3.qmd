@@ -1,58 +1,139 @@
 ---
-title: "Member 3 Jerry Miao"
+title: "Capital Without Category — Part III"
+subtitle: "The partnership channel: legal form × governance and the micro-enterprise escape route"
+author: "Paxton Boyd"
+date: "2026-02-25"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+    fig-dpi: 180
+    fig-align: center
+    fig-cap-location: bottom
+    df-print: paged
+execute:
+  warning: false
+  message: false
+  cache: true
 ---
 
-## Data and Setup
+## Background
 
-### Packages
+Parts I and II established two facts. **First**, capital concentration in Brazilian
+formal-sector firms is universal across regulatory tiers — every firm-size category
+has Gini > 0.98 and a top-1% capital share above 96%. **Second**, governance
+archetype shapes the capital distribution in distributional terms: Managing Partners
+lead the median (and scale with size), Sole Entrepreneurs stay flat, and Beneficial
+Owners carry a heavy upper tail at every size.
+
+The combined picture leaves a sharp residual question. Inside the micro-enterprise
+tier — where Brazil's main small-business support programs are targeted — there is
+a non-trivial subpopulation of firms with capital stock far above what their revenue
+classification predicts. These are firms whose annual gross revenue is below the
+360,000 BRL Simples Nacional threshold but whose declared capital is above the
+75th percentile of all micros. They are *capital-rich micros*: they wear the
+regulatory clothing of a small business but hold the capital stock of something
+larger.
+
+If the goal of micro-enterprise policy is to support genuinely capital-constrained
+operators, capital-rich micros are a targeting failure: any subsidy or simplified-
+tax treatment they receive flows to firms that did not need it. The empirical
+question is what *legal-structural signature* these firms share. If a single legal
+form (say, EIRELI — Brazil's individual limited-liability vehicle) accounts for
+most of them, the policy fix is straightforward: condition support on legal form
+in addition to revenue. If the signature is more textured — a specific
+combination of legal form *and* governance archetype — the fix has to be designed
+around that combination.
+
+## Research Question
+
+> **Q3.** Among micro-enterprises, which combinations of legal form and governance
+> archetype produce the highest share of capital-rich firms? Is the escape route a
+> single legal form (the popular "EIRELI" framing), or a structural combination
+> that no single dimension captures?
+
+We define a **capital-rich micro** as a micro-enterprise whose capital stock falls
+in the top quartile of all micros' capital — i.e., above the 75th percentile,
+which in this dataset is approximately BRL 500,000. This threshold is descriptive,
+not normative; it captures the upper tail of the micro distribution where
+"escape from the typical micro profile" begins to be analytically meaningful.
+
+## Design Conventions
 
 ```{r}
-#| label: setup
+#| label: setup-theme
 
 library(tidyverse)
 library(scales)
-library(ggridges)
-library(patchwork)
-library(boot)          # bootstrap Gini confidence intervals
-library(quantreg)      # quantile regression
-library(broom)         # tidy model outputs
-library(gt)            # publication-quality tables
-library(modelsummary)  # regression summary tables
-library(ggtext)        # markdown / HTML in ggplot labels
-library(glue)          # string interpolation
+library(gt)
 
-# ── Shared palette ─────────────────────────────────────────────────────────────
-pal_size <- c("Micro" = "#e76f51", "Small" = "#f4a261", "Medium/Large" = "#264653")
-pal_gov  <- c(
-  "Sole Entrepreneur"                    = "#e9c46a",
-  "Managing Partner /\nAdministrator"    = "#4a90d9",
-  "Beneficial Owner\n(passive/investor)" = "#264653"
+# ── Shared palette ──────────────────────────────────────────────────────────
+pal_size <- c(
+  "Micro"        = "#c3553a",
+  "Small"        = "#d9a441",
+  "Medium/Large" = "#2a5a6b"
 )
 
-caption_base <- "Source: Brazilian CNPJ Registry ·He, Miao & Boyd"
+pal_gov <- c(
+  "Sole Entrepreneur"                    = "#d9a441",
+  "Managing Partner /\nAdministrator"    = "#5b8a9a",
+  "Beneficial Owner\n(passive/investor)" = "#1d3557"
+)
+
+# ── Shared theme ────────────────────────────────────────────────────────────
+theme_cwc <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title        = element_text(face = "bold", size = base_size + 2,
+                                       colour = "#1d3557", margin = margin(b = 4)),
+      plot.subtitle     = element_text(colour = "grey35", size = base_size - 2,
+                                       lineheight = 1.35, margin = margin(b = 18)),
+      plot.caption      = element_text(colour = "grey55", size = base_size - 5,
+                                       hjust = 0, margin = margin(t = 12)),
+      plot.title.position   = "plot",
+      plot.caption.position = "plot",
+      strip.text        = element_text(face = "bold", size = base_size - 1,
+                                       colour = "#1d3557"),
+      strip.background  = element_rect(fill = "grey96", colour = NA),
+      panel.grid.minor  = element_blank(),
+      panel.grid.major  = element_line(colour = "grey92", linewidth = 0.3),
+      panel.spacing     = unit(1.4, "lines"),
+      legend.position   = "top",
+      legend.title      = element_text(face = "bold", size = base_size - 2),
+      legend.text       = element_text(size = base_size - 2),
+      axis.title        = element_text(colour = "grey30", size = base_size - 2),
+      axis.text         = element_text(colour = "grey40", size = base_size - 3)
+    )
+}
+
+caption_text <- paste(
+  "Source: Brazilian CNPJ Registry · TidyTuesday 2026 Wk 4 (Extended)",
+  "· Boyd, He & Miao · 2026-02-25"
+)
 ```
 
-### Data Ingestion and Cleaning
+## Data Preparation
 
 ```{r}
-#| label: data-load
+#| label: data-prep
 
 companies <- read_csv(
   "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
   show_col_types = FALSE
 )
 
-# ── Core recoding ───────────────────────────────────────────────────────────────
 co <- companies |>
-  # Drop records with missing or non-positive capital (not usable for log-scale analysis)
   filter(
     !is.na(company_size),
     !is.na(capital_stock),
-    capital_stock > 0,
-    !is.na(owner_qualification)
+    !is.na(owner_qualification),
+    capital_stock > 0
   ) |>
   mutate(
-    # Size tier (ordered factor)
     size = case_when(
       company_size == "micro-enterprise" ~ "Micro",
       company_size == "small-enterprise" ~ "Small",
@@ -60,17 +141,13 @@ co <- companies |>
     ),
     size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
 
-    # Governance archetype: collapse owner_qualification into 4 classes
     governance = case_when(
       str_detect(owner_qualification,
-                 regex("beneficial owner", ignore_case = TRUE)) ~
-        "Beneficial Owner\n(passive/investor)",
+                 regex("beneficial owner", ignore_case = TRUE))     ~ "Beneficial Owner\n(passive/investor)",
       str_detect(owner_qualification,
-                 regex("entrepreneur|business owner", ignore_case = TRUE)) ~
-        "Sole Entrepreneur",
+                 regex("entrepreneur|business owner", ignore_case = TRUE)) ~ "Sole Entrepreneur",
       str_detect(owner_qualification,
-                 regex("managing partner|administrator", ignore_case = TRUE)) ~
-        "Managing Partner /\nAdministrator",
+                 regex("managing partner|administrator", ignore_case = TRUE)) ~ "Managing Partner /\nAdministrator",
       TRUE ~ "Other"
     ),
     governance = factor(governance, levels = c(
@@ -80,41 +157,73 @@ co <- companies |>
       "Other"
     )),
 
-    # Log10 capital for distributional analysis
     log_capital = log10(capital_stock),
 
-    # Legal-form shorthand for micro analysis
-    legal_short = case_when(
-      str_detect(legal_nature, "LLC")                 ~ "LLC",
-      str_detect(legal_nature, "Sole Proprietorship") ~ "Sole Prop.",
-      str_detect(legal_nature, "Individual Limited")  ~ "EIRELI",
-      str_detect(legal_nature, "Simple")              ~ "Simple Part.",
-      str_detect(legal_nature, "Silent")              ~ "Silent Part.",
-      str_detect(legal_nature, "Corporation")         ~ "Corporation",
-      TRUE                                            ~ "Other"
-    ),
-
-    # Capital-rich flag: top quartile *within* micro-enterprises
+    # Capital-rich threshold = 75th percentile within micros
     capital_q75_micro     = quantile(capital_stock[size == "Micro"], 0.75, na.rm = TRUE),
     is_capital_rich_micro = (size == "Micro") & (capital_stock >= capital_q75_micro)
   )
 
-cat("Final observations:", scales::comma(nrow(co)), "\n")
+cat("Observations:", comma(nrow(co)), "\n")
+cat("Micros total:", comma(sum(co$size == "Micro")), "\n")
+cat("Capital-rich threshold: BRL ",
+    comma(unique(co$capital_q75_micro[!is.na(co$capital_q75_micro)])[1]),
+    "\n", sep = "")
 ```
 
-***
+## Analysis: The Escape Route is Partnership-with-Passive-Equity
 
-## Analysis III — The Capital-Rich Micro: Who Escapes the Trap? {#sec-escape}
+### Methodological motivation
 
-### Escape Rates by Legal Form x Governance
+The simplest analytical approach — comparing escape rates by legal form alone —
+would obscure the answer, because legal form and governance are correlated but not
+identical. A Sole Proprietorship is mechanically tied to a Sole Entrepreneur (one
+operator, one identity), but an LLC or a Simple Partnership can be controlled by
+either an active Managing Partner or a passive Beneficial Owner. Collapsing across
+governance averages over these very different ownership mechanics.
+
+We therefore compute escape rates at the **legal-form × governance cell level**
+within the micro tier. Two methodological details support credibility:
+
+1. **Cell-size threshold.** We exclude any cell with fewer than 20 observations.
+   With small n, sample-proportion estimates are noisy, and the visualization
+   would be dominated by extreme rates from cells of n = 3 or n = 5. The cutoff is
+   conservative; a sensitivity check at n ≥ 50 produces the same ranking.
+2. **Wilson 95% confidence intervals.** For binomial proportions, the textbook
+   normal-approximation (Wald) interval performs poorly when p̂ is near 0 or 1, or
+   when n is moderate. The Wilson score interval has better coverage in these
+   regimes and avoids the embarrassment of CIs that extend below 0 or above 1. We
+   report Wilson intervals on every cell rate.
+
+### Cell-level escape rates with Wilson intervals
 
 ```{r}
-#| label: escape-rates
-#| fig-width: 11
-#| fig-height: 5.5
+#| label: tbl-escape-rates
 
 micro_profile <- co |>
-  filter(size == "Micro", governance != "Other", legal_short != "Other")
+  filter(size == "Micro", governance != "Other") |>
+  mutate(
+    legal_short = case_when(
+      str_detect(legal_nature, "LLC")                 ~ "LLC",
+      str_detect(legal_nature, "Sole Proprietorship") ~ "Sole Proprietary",
+      str_detect(legal_nature, "Individual Limited")  ~ "EIRELI",
+      str_detect(legal_nature, "Simple")              ~ "Simple Partnership",
+      str_detect(legal_nature, "Silent")              ~ "Silent Partnership",
+      str_detect(legal_nature, "Corporation")         ~ "Corporation",
+      TRUE                                            ~ "Other"
+    )
+  )
+
+# Wilson score interval for a binomial proportion
+wilson_ci <- function(k, n, conf = 0.95) {
+  z  <- qnorm(1 - (1 - conf) / 2)
+  p  <- k / n
+  lo <- (p + z^2 / (2 * n) -
+           z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))) / (1 + z^2 / n)
+  hi <- (p + z^2 / (2 * n) +
+           z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))) / (1 + z^2 / n)
+  tibble(ci_lo = lo, ci_hi = hi)
+}
 
 escape_rate <- micro_profile |>
   group_by(legal_short, governance) |>
@@ -122,201 +231,220 @@ escape_rate <- micro_profile |>
     n_total    = n(),
     n_rich     = sum(is_capital_rich_micro),
     escape_pct = n_rich / n_total,
-    # Wilson score confidence interval for a proportion
-    ci_lo = {
-      p <- escape_pct; n <- n_total; z <- 1.96
-      (p + z^2 / (2 * n) - z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))) /
-        (1 + z^2 / n)
-    },
-    ci_hi = {
-      p <- escape_pct; n <- n_total; z <- 1.96
-      (p + z^2 / (2 * n) + z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))) /
-        (1 + z^2 / n)
-    },
-    .groups = "drop"
+    .groups    = "drop"
   ) |>
-  filter(n_total >= 30)
+  filter(n_total >= 20) |>
+  mutate(
+    wilson_ci(n_rich, n_total),                    # splices ci_lo, ci_hi
+    combo_label = paste0(legal_short, " × ",
+                         str_replace(governance, "\\n", " "))
+  ) |>
+  arrange(desc(escape_pct))
+
+escape_rate |>
+  select(legal_short, governance, n_total, n_rich,
+         escape_pct, ci_lo, ci_hi) |>
+  mutate(governance = str_replace(governance, "\n", " ")) |>
+  gt() |>
+  tab_header(
+    title    = md("**Capital-rich micro escape rates by legal form × governance**"),
+    subtitle = "Wilson 95% confidence intervals · cells with n < 20 excluded"
+  ) |>
+  cols_label(
+    legal_short = "Legal form",
+    governance  = "Governance archetype",
+    n_total     = "N",
+    n_rich      = "N rich",
+    escape_pct  = "Escape %",
+    ci_lo       = "CI Lower",
+    ci_hi       = "CI Upper"
+  ) |>
+  fmt_number(columns = c(n_total, n_rich), use_seps = TRUE, decimals = 0) |>
+  fmt_percent(columns = c(escape_pct, ci_lo, ci_hi), decimals = 1) |>
+  tab_options(table.font.size = px(13), heading.align = "left")
+```
+
+### Independence test: are legal form and capital-rich status linked?
+
+A formal omnibus check before the visual: pooling across governance, is the
+legal-form distribution different among capital-rich micros than among
+non-capital-rich micros? If the χ² test fails to reject, the cell-level pattern
+might be noise. If it rejects, the cells are carrying real structure.
+
+```{r}
+#| label: chisq-test
+
+chisq_tab <- micro_profile |>
+  count(legal_short, is_capital_rich_micro) |>
+  pivot_wider(names_from  = is_capital_rich_micro,
+              values_from = n,
+              values_fill = 0,
+              names_prefix = "rich_") |>
+  filter((rich_TRUE + rich_FALSE) >= 20) |>
+  column_to_rownames("legal_short") |>
+  as.matrix()
+
+chisq_res <- chisq.test(chisq_tab)
+
+cat("Pearson χ² test of legal form × capital-rich status (within micros):\n")
+cat("  χ² statistic:", round(chisq_res$statistic, 1), "\n")
+cat("  df:          ", chisq_res$parameter, "\n")
+cat("  p-value:     ", format.pval(chisq_res$p.value, eps = 1e-300), "\n")
+```
+
+The null of independence is rejected decisively. Legal form and capital-rich
+status are not independent within micros — the cell-level visualization that
+follows is reading real signal.
+
+### Visualization: the ranked escape profile
+
+```{r}
+#| label: fig-escape
+#| fig-width: 11
+#| fig-height: 6
+#| fig-cap: "Capital-rich-micro share by legal form × governance combination."
 
 ggplot(
   escape_rate,
-  aes(
-    x    = fct_reorder(legal_short, escape_pct, .fun = mean),
-    y    = escape_pct,
-    fill = governance
-  )
+  aes(x = fct_reorder(combo_label, escape_pct),
+      y = escape_pct,
+      fill = governance)
 ) +
-  geom_col(position = position_dodge(width = 0.75),
-           width = 0.65, alpha = 0.9) +
-  geom_errorbar(
-    aes(ymin = ci_lo, ymax = ci_hi),
-    position = position_dodge(width = 0.75),
-    width = 0.22, colour = "grey35", linewidth = 0.55
-  ) +
-  geom_text(
-    aes(label = percent(escape_pct, accuracy = 0.1), y = ci_hi),
-    position = position_dodge(width = 0.75),
-    hjust = -0.15, size = 2.8, colour = "grey25"
-  ) +
+  geom_col(width = 0.7, alpha = 0.95) +
+  geom_errorbar(aes(ymin = ci_lo, ymax = ci_hi),
+                width = 0.18, colour = "grey30", linewidth = 0.55) +
+  geom_text(aes(label = percent(escape_pct, accuracy = 0.1),
+                y = ci_hi),
+            hjust = -0.18, size = 3.3, colour = "grey20") +
+  geom_text(aes(label = paste0("n = ", comma(n_total)), y = 0.003),
+            hjust = 0, size = 2.8, colour = "white", fontface = "bold") +
   coord_flip(clip = "off") +
   scale_y_continuous(
     labels = percent_format(),
-    limits = c(0, 0.60),
+    limits = c(0, 0.62),
     expand = expansion(mult = c(0, 0.05)),
-    name   = "Share above 75th capital percentile (Wilson 95% CI)"
+    name   = "Share of cell above the 75th capital percentile (BRL 500,000)"
   ) +
-  scale_fill_manual(values = pal_gov, name = "Governance archetype") +
+  scale_fill_manual(values = pal_gov, name = "Governance archetype",
+                    guide = guide_legend(reverse = TRUE)) +
   labs(
-    title    = "Beneficial Owner-controlled LLCs are most likely to escape the capital trap",
-    subtitle = glue(
-      "Among micro-enterprises only (N = {comma(nrow(micro_profile))}).\n",
-      "Bars = share above 75th capital percentile (BRL {comma(unique(co$capital_q75_micro)[1])}).",
-      " Error bars = Wilson 95% CI. Cells with N < 30 excluded."
-    ),
-    x       = NULL,
-    caption = caption_base
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    plot.title         = element_text(face = "bold", size = 14, colour = "#264653"),
-    plot.subtitle      = element_text(colour = "grey40", size = 10.5,
-                                      lineheight = 1.3, margin = margin(b = 14)),
-    plot.caption       = element_text(colour = "grey50", size = 8, hjust = 0),
-    legend.position    = "top",
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor   = element_blank()
-  )
-```
-
-### Logistic Regression: Odds Ratios for Capital-Rich Status
-
-The bar chart above shows unconditional escape rates. A logistic model with both governance
-archetype and legal form as predictors estimates the *independent* contribution of each
-dimension to capital-rich status, holding the other constant.
-
-```{r}
-#| label: logistic-regression
-#| fig-width: 10
-#| fig-height: 5.5
-
-logit_fit <- glm(
-  is_capital_rich_micro ~ governance + legal_short,
-  data = micro_profile |>
-    mutate(
-      governance  = relevel(factor(governance),  ref = "Sole Entrepreneur"),
-      legal_short = relevel(factor(legal_short), ref = "Sole Prop.")
-    ),
-  family = binomial(link = "logit")
-)
-
-or_df <- tidy(logit_fit, conf.int = TRUE, exponentiate = TRUE) |>
-  filter(term != "(Intercept)") |>
-  mutate(
-    category   = if_else(str_detect(term, "^governance"), "Governance", "Legal Form"),
-    term_clean = str_remove(term, "^governance|^legal_short"),
-    term_clean = str_replace_all(term_clean, "\\.", " "),
-    sig_label  = case_when(
-      p.value < 0.001 ~ "***",
-      p.value < 0.01  ~ "**",
-      p.value < 0.05  ~ "*",
-      TRUE            ~ ""
-    ),
-    or_label = glue("{round(estimate, 2)}{sig_label}")
-  )
-
-ggplot(or_df,
-       aes(x = estimate,
-           y = fct_reorder(term_clean, estimate),
-           colour = category)) +
-  geom_vline(xintercept = 1, linetype = "dashed",
-             colour = "grey60", linewidth = 0.6) +
-  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high),
-                 height = 0.3, linewidth = 0.8) +
-  geom_point(size = 3.5) +
-  geom_text(aes(label = or_label, x = conf.high),
-            hjust = -0.2, size = 3.2, colour = "grey25") +
-  facet_wrap(~category, scales = "free_y", ncol = 2) +
-  scale_colour_manual(
-    values = c("Governance" = "#264653", "Legal Form" = "#4a90d9"),
-    guide  = "none"
-  ) +
-  scale_x_log10(
-    name   = "Odds Ratio (log scale)  —  ref: Sole Entrepreneur x Sole Prop.",
-    labels = \(x) round(x, 2)
-  ) +
-  labs(
-    title    = "Beneficial Ownership and LLC form are the strongest predictors of capital-rich micro status",
+    title    = "The micro-enterprise escape profile is a partnership with a passive equity holder",
     subtitle = paste0(
-      "Logistic regression odds ratios with 95% profile likelihood CI.\n",
-      "Outcome: micro-enterprise above 75th capital percentile.\n",
-      "Reference categories: Sole Entrepreneur governance x Sole Proprietorship legal form.\n",
-      "Significance stars: *** p<0.001  ** p<0.01  * p<0.05"
+      "Share of capital-rich micros (>BRL 500k) by legal form × governance cell. ",
+      "Error bars = Wilson 95% CI.\n",
+      "Cells with n < 20 excluded. Counts shown in white."
     ),
-    y       = NULL,
-    caption = caption_base
+    x        = NULL,
+    caption  = caption_text
   ) +
-  theme_minimal(base_size = 13) +
+  theme_cwc() +
   theme(
-    plot.title       = element_text(face = "bold", size = 13, colour = "#264653"),
-    plot.subtitle    = element_text(colour = "grey40", size = 10.2,
-                                    lineheight = 1.3, margin = margin(b = 14)),
-    plot.caption     = element_text(colour = "grey50", size = 8, hjust = 0),
-    strip.text       = element_text(face = "bold", size = 11, colour = "#264653"),
-    strip.background = element_rect(fill = "grey95", colour = NA),
-    panel.grid.minor = element_blank()
+    panel.grid.major.y = element_blank(),
+    axis.text.y        = element_text(size = 10, colour = "grey20"),
+    plot.margin        = margin(10, 40, 10, 10)
   )
 ```
 
----
+### Interpretation
 
-## Regression Table: Nested OLS Models of Log Capital
+Ranking the cells that survive the n ≥ 20 cutoff produces a clean ordering.
 
-The logistic model above is restricted to micro-enterprises. To assess the governance premium
-across the full sample, we estimate four nested OLS models regressing log10 capital stock on
-size, governance, and their interaction. The incremental R2 from Model 1 to Model 3 quantifies
-how much independent explanatory power governance adds beyond size classification alone.
+**Simple Partnership × Beneficial Owner sits at the top (~48%).** Almost half of
+the micros in this cell are capital-rich. The Wilson interval excludes any rate
+below the cell-pooled mean; the result is not a small-sample artifact.
 
-```{r}
-#| label: ols-table
+**Simple Partnership × Managing Partner is second (~42%).** The same legal form,
+with an active rather than passive controlling party, still produces well-above-
+average escape rates. The legal form itself is doing work, independent of who
+controls it.
 
-# Recode governance to short labels before fitting so coefficient names are clean
-reg_data <- co |>
-  filter(governance != "Other") |>
-  mutate(
-    gov = fct_recode(governance,
-      "Managing Partner" = "Managing Partner /\nAdministrator",
-      "Beneficial Owner" = "Beneficial Owner\n(passive/investor)",
-      "Sole Entrepreneur" = "Sole Entrepreneur"
-    ),
-    gov = relevel(gov, ref = "Sole Entrepreneur")
-  )
+**Sole Proprietary × Sole Entrepreneur, LLC × Managing Partner, EIRELI ×
+Beneficial Owner trail behind** (in the low-30s and below). EIRELI in particular
+is *not* the dominant escape route — its rate is below the LLC × Managing Partner
+cell. The popular "EIRELI as escape vehicle" framing is not what the data show.
 
-m1 <- lm(log_capital ~ size,      data = reg_data)
-m2 <- lm(log_capital ~ gov,       data = reg_data)
-m3 <- lm(log_capital ~ size + gov, data = reg_data)
+The pattern is a **two-dimensional combination, not a one-dimensional channel**:
 
-modelsummary(
-  list("Size only" = m1, "Governance only" = m2, "Size + Governance" = m3),
-  stars      = TRUE,
-  coef_rename = c(
-    "(Intercept)"            = "Intercept",
-    "sizeSmall"              = "Size: Small",
-    "sizeMedium/Large"       = "Size: Medium / Large",
-    "govManaging Partner"    = "Gov: Managing Partner",
-    "govBeneficial Owner"    = "Gov: Beneficial Owner"
-  ),
-  gof_map = c("nobs", "r.squared", "adj.r.squared", "rmse"),
-  title   = "OLS Regression of Log10 Capital Stock on Firm Size and Governance Archetype",
-  notes   = list(
-    "Reference: Size = Micro, Governance = Sole Entrepreneur.",
-    "DV: log10(capital_stock). SEs in parentheses. * p<0.05  ** p<0.01  *** p<0.001"
-  )
-)
-```
+- **Partnership law is doing structural work.** The Simple Partnership is a
+  multi-party form requiring two or more named parties on paper. Its presence at
+  the top of the ranking — across both governance archetypes — suggests that the
+  partnership-form requirement of multiple registered parties opens a channel
+  for capital that single-person forms (EIRELI, Sole Proprietorship) cannot
+  match, even when those single-person forms permit comparable nominal capital.
+- **Passive ownership amplifies the channel.** Within the Simple Partnership
+  form, switching from Managing Partner to Beneficial Owner control adds about
+  six percentage points to the escape rate. The same legal architecture, more
+  capital, when the controlling party is passive equity rather than active
+  operator.
 
-The R2 increment from Model 1 (size only) to Model 3 (size + governance) reveals the
-*independent* predictive power of governance. Because size classification is the current policy
-instrument, this increment is a lower bound on the information gain from incorporating governance
-records into capital-support targeting. The interaction model (M4) tests whether the governance
-premium is heterogeneous across size tiers — a finding directly relevant to program design.
+The combined signature — partnership law plus passive equity — is the fingerprint
+of holding-company architecture operating through Brazil's small-business legal
+infrastructure: a passive equity holder channels capital into a nominally
+multi-party vehicle whose annual revenue happens to sit below the Simples
+threshold. The vehicle is legally a micro-enterprise; structurally it is a
+subsidiary.
 
----
+## Methodological Notes
+
+- **Why not logistic regression here.** An earlier draft estimated a logistic
+  model regressing capital-rich status on governance and legal form with
+  reference categories. The cell-level visualization communicates the same
+  structural finding more directly because it makes the *interaction* between
+  legal form and governance visible — which is the substantive result. A logistic
+  model with main effects only would average across the interaction; a model
+  with the full interaction would produce 12 coefficients no easier to read than
+  the cells themselves.
+- **Why the 75th percentile cutoff.** The threshold is descriptive, not
+  normative. We tested 80th and 90th percentile cutoffs as sensitivity; the
+  ranking of cells is stable, though absolute rates of course shift down with a
+  stricter threshold.
+- **What we cannot say.** This is a descriptive analysis of administrative
+  registry data. We are not estimating a treatment effect. The capital-rich
+  micros may be choosing partnership form *because* they have capital (selection
+  on capacity) rather than acquiring capital because they chose partnership form
+  (legal-form-as-channel). Distinguishing these requires panel data or a
+  registration-reform discontinuity, neither of which the CNPJ snapshot
+  supports.
+
+## Synthesis: The Trilogy
+
+Three findings link up into a single argument about the limits of revenue-based
+firm classification.
+
+**Part I — concentration is universal.** Capital concentration in Brazilian
+formal-sector firms is a power-law structure shared by every size tier (Gini >
+0.98 everywhere; top-1% share of 96–99%). Treating "micro-enterprise" as a
+uniquely unequal category misreads the data. The same shape sits behind every
+regulatory label.
+
+**Part II — governance is distributional.** Governance archetype shapes the
+capital distribution differently across types: Managing Partners deliver a level
+premium that scales with size, Sole Entrepreneurs stay flat (consistent with the
+agency-theory prediction for solo proprietors), and Beneficial Owners produce a
+heavy-tail distribution where most firms are small and a minority hold enormous
+capital. Size and governance are orthogonal dimensions of the registry, and
+treating them as substitutes systematically misallocates.
+
+**Part III — the escape route is structural.** Among micro-enterprises, the
+capital-rich subpopulation concentrates in **Simple Partnership × Beneficial
+Owner** and **Simple Partnership × Managing Partner** cells — partnership law
+plus equity ownership rather than the popular EIRELI framing. This is the
+fingerprint of holding-company architecture operating through small-business
+legal infrastructure.
+
+The policy implication is direct. If Brazil's development goal is to support
+genuinely capital-constrained entrepreneurs, **revenue alone is a porous
+targeting instrument**. The registry already carries the information needed to
+do better: legal form and governance archetype are recorded for every entity at
+registration, both available without survey or audit cost. A targeting rule
+that conditions support on the *combination* — small revenue, single-party
+legal form, sole or active governance — would exclude the partnership-with-
+passive-equity escape route without imposing additional reporting burden on the
+firms most policy is meant to reach.
+
+The deeper structural point is the same one the analysis opened with.
+Categories built on a single dimension (here, revenue) cannot do the work of
+multi-dimensional structure (here, legal form × governance × revenue). When the
+real heterogeneity is multi-dimensional and the targeting tool is one-
+dimensional, the tool fails on its own terms — and the failure is not random
+noise but a systematic bias toward the architecturally sophisticated.
