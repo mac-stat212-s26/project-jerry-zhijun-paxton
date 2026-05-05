@@ -1,5 +1,544 @@
 ---
-title: "Member 2 First Name & Last Name Initial"
+title: "Capital Without Category — Part II"
+subtitle: "Governance as distributional shape: owner archetype and the heavy-tail signature"
+author: "Jerry Miao"
+date: "2026-02-25"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+    fig-dpi: 180
+    fig-align: center
+    fig-cap-location: bottom
+    df-print: paged
+execute:
+  warning: false
+  message: false
+  cache: true
 ---
 
-Your exploratory data analysis of the team datasets go here.
+## Background
+
+Part I established that capital concentration in Brazilian formal-sector firms is a
+universal property: every firm-size tier exhibits Gini > 0.98 and a top-1% capital
+share of 96–99%. The shape of the distribution is the same across regulatory
+categories. What differs across tiers is *who occupies the top* — and the firm-size
+classification cannot answer that question, because it is built on annual revenue and
+is silent on the legal architecture of the controlling party.
+
+The CNPJ registry's `owner_qualification` field carries that missing information. It
+records the legal role of the controlling person under three broad archetypes:
+
+- **Sole Entrepreneur** — a natural person operating under their own name, fully
+  exposed to business risk.
+- **Managing Partner / Administrator** — an active operator who runs the business as
+  one of one or more named partners with operational authority.
+- **Beneficial Owner (passive / investor)** — a controlling equity holder who may sit
+  behind a holding-company chain, often without operational involvement.
+
+These archetypes map onto well-established predictions from agency theory. Sole
+Entrepreneurs face the highest information asymmetries with external lenders and have
+no separation between personal and business liability. Managing Partners signal active
+human capital and shared risk-bearing, lowering the information cost of credit.
+Beneficial Owners are heterogeneous: at the small end they are dormant shells; at the
+large end they are investment vehicles channelling capital from institutional or
+family-office structures.
+
+## Research Question
+
+> **Q2.** Conditional on firm size, does governance archetype shape the capital
+> distribution? If it does, is the effect a *level shift* (governance moves the
+> median), a *variance shift* (governance moves the tail), or both?
+
+The question matters because the answer dictates the targeting strategy. A level
+shift means governance acts as a coarse credit-access proxy. A variance shift means
+governance is selecting different *populations* of firms — and lumping them by size
+will systematically misallocate any size-targeted policy.
+
+## Design Conventions
+
+```{r}
+#| label: setup-theme
+
+library(tidyverse)
+library(scales)
+library(patchwork)
+library(gt)
+
+# ── Shared palette ──────────────────────────────────────────────────────────
+pal_size <- c(
+  "Micro"        = "#c3553a",
+  "Small"        = "#d9a441",
+  "Medium/Large" = "#2a5a6b"
+)
+
+pal_gov <- c(
+  "Sole Entrepreneur"                    = "#d9a441",   # amber (solo)
+  "Managing Partner /\nAdministrator"    = "#5b8a9a",   # slate blue (active)
+  "Beneficial Owner\n(passive/investor)" = "#1d3557"    # deep navy (passive)
+)
+
+# ── Shared theme ────────────────────────────────────────────────────────────
+theme_cwc <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title        = element_text(face = "bold", size = base_size + 2,
+                                       colour = "#1d3557", margin = margin(b = 4)),
+      plot.subtitle     = element_text(colour = "grey35", size = base_size - 2,
+                                       lineheight = 1.35, margin = margin(b = 18)),
+      plot.caption      = element_text(colour = "grey55", size = base_size - 5,
+                                       hjust = 0, margin = margin(t = 12)),
+      plot.title.position   = "plot",
+      plot.caption.position = "plot",
+      strip.text        = element_text(face = "bold", size = base_size - 1,
+                                       colour = "#1d3557"),
+      strip.background  = element_rect(fill = "grey96", colour = NA),
+      panel.grid.minor  = element_blank(),
+      panel.grid.major  = element_line(colour = "grey92", linewidth = 0.3),
+      panel.spacing     = unit(1.4, "lines"),
+      legend.position   = "top",
+      legend.title      = element_text(face = "bold", size = base_size - 2),
+      legend.text       = element_text(size = base_size - 2),
+      axis.title        = element_text(colour = "grey30", size = base_size - 2),
+      axis.text         = element_text(colour = "grey40", size = base_size - 3)
+    )
+}
+
+caption_text <- paste(
+  "Source: Brazilian CNPJ Registry · TidyTuesday 2026 Wk 4 (Extended)",
+  "· Boyd, He & Miao · 2026-02-25"
+)
+```
+
+## Data Preparation
+
+```{r}
+#| label: data-prep
+
+companies <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
+  show_col_types = FALSE
+)
+
+co <- companies |>
+  filter(
+    !is.na(company_size),
+    !is.na(capital_stock),
+    !is.na(owner_qualification),
+    capital_stock > 0
+  ) |>
+  mutate(
+    size = case_when(
+      company_size == "micro-enterprise" ~ "Micro",
+      company_size == "small-enterprise" ~ "Small",
+      TRUE                               ~ "Medium/Large"
+    ),
+    size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
+
+    governance = case_when(
+      str_detect(owner_qualification,
+                 regex("beneficial owner", ignore_case = TRUE))     ~ "Beneficial Owner\n(passive/investor)",
+      str_detect(owner_qualification,
+                 regex("entrepreneur|business owner", ignore_case = TRUE)) ~ "Sole Entrepreneur",
+      str_detect(owner_qualification,
+                 regex("managing partner|administrator", ignore_case = TRUE)) ~ "Managing Partner /\nAdministrator",
+      TRUE ~ "Other"
+    ),
+    governance = factor(governance, levels = c(
+      "Sole Entrepreneur",
+      "Managing Partner /\nAdministrator",
+      "Beneficial Owner\n(passive/investor)",
+      "Other"
+    )),
+
+    log_capital = log10(capital_stock)
+  )
+
+cat("Observations:", comma(nrow(co)), "\n")
+cat("Governance archetypes:\n"); print(count(co, governance, sort = TRUE))
+```
+
+## Descriptive Snapshot: Governance × Size Cells
+
+The table below carries the data plotted in the two-panel figure that follows.
+Two columns matter most: the **median**, which gives the level summary that
+Panel A tracks across tiers, and the **mean / median** ratio, which gives the
+tail-heaviness summary that Panel B tracks. Ratios close to 1 signal a roughly
+symmetric distribution; ratios in the double or triple digits signal a heavy
+right tail. As we will see, both moments tell tier-dependent stories rather
+than uniform archetype-level ones.
+
+```{r}
+#| label: tbl-governance-cells
+
+gov_cells <- co |>
+  filter(governance != "Other") |>
+  group_by(size, governance) |>
+  summarise(
+    n         = n(),
+    median    = median(capital_stock),
+    mean      = mean(capital_stock),
+    p90       = quantile(capital_stock, 0.90),
+    mean_med  = mean / median,
+    .groups   = "drop"
+  )
+
+gov_cells |>
+  mutate(governance = str_replace(governance, "\n", " ")) |>
+  gt(groupname_col = "size") |>
+  tab_header(
+    title    = md("**Capital stock by size × governance**"),
+    subtitle = "Mean / median ratio diagnoses tail heaviness within each cell"
+  ) |>
+  cols_label(
+    governance = "Governance archetype",
+    n = "N", median = "Median", mean = "Mean",
+    p90 = "P90", mean_med = "Mean / Median"
+  ) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0) |>
+  fmt_number(columns = c(median, mean, p90),
+             suffixing = TRUE, decimals = 1) |>
+  fmt_number(columns = mean_med, decimals = 1) |>
+  tab_style(
+    style     = cell_text(weight = "bold"),
+    locations = cells_row_groups()
+  ) |>
+  tab_options(
+    table.font.size            = px(13),
+    heading.align              = "left",
+    row_group.background.color = "#f4f4f4"
+  ) |>
+  tab_source_note(md("*Source: Brazilian CNPJ Registry*"))
+```
+
+## Analysis: Governance Shapes Distributions, Not Just Levels
+
+### Methodological motivation
+
+A boxplot or a bar chart of medians would already show that governance archetypes
+differ on average — but it would miss the analytically critical question: do they
+differ in *level* (a translation of the entire distribution) or in *shape*
+(different variances and tail heaviness)? Two complementary panels surface both
+moments at once:
+
+- **Panel A — median trajectories with range.** For each governance archetype,
+  plot median capital across size tiers, with the middle 80% of the distribution
+  (P10–P90) shown as thin whiskers and the IQR (P25–P75) as a thicker
+  translucent bar. Connecting medians across tiers within an archetype reveals
+  whether that archetype's *level* scales with size or stays flat.
+- **Panel B — mean ÷ median ratio.** The gap between mean and median is a robust
+  tail-heaviness diagnostic: when the right tail is heavy, the mean is pulled
+  far above the median and the ratio diverges from 1. Plotting this ratio on a
+  log scale by size tier surfaces tail behaviour that the median trajectory in
+  Panel A cannot show directly.
+
+Why not density ridges? An earlier draft used `geom_density_ridges` to show full
+distributional shape side-by-side. Ridges work well when distributions are
+roughly comparable in scale, but capital stock is so heavy-tailed that the ridge
+for each cell collapses into a thin spike at the lower end with a faint
+right-trailing arm — visually, all nine cells look nearly identical even when
+their statistical moments differ by orders of magnitude. The trajectory + ratio
+design isolates the two moments that actually carry the story.
+
+For inferential support we use the **Kruskal-Wallis test** within each size tier.
+This is a non-parametric one-way analysis of variance on ranks: appropriate here
+because capital-stock distributions are extremely log-normal at best and have
+heavy right tails that violate ANOVA's normality assumption. Kruskal-Wallis
+tests the null hypothesis that all governance subgroups within a size tier are
+drawn from the same distribution. Rejecting the null does not by itself say
+*what* differs — that interpretation comes from the visual.
+
+### Kruskal-Wallis tests within each size tier
+
+```{r}
+#| label: kw-test
+
+kw_results <- co |>
+  filter(governance != "Other") |>
+  group_by(size) |>
+  summarise(
+    statistic = kruskal.test(capital_stock ~ governance)$statistic,
+    df        = kruskal.test(capital_stock ~ governance)$parameter,
+    p_value   = kruskal.test(capital_stock ~ governance)$p.value,
+    n         = n(),
+    .groups   = "drop"
+  )
+
+kw_results |>
+  gt() |>
+  tab_header(
+    title    = md("**Kruskal-Wallis tests of governance × capital within each tier**"),
+    subtitle = "H₀: all three governance subgroups draw from the same capital distribution"
+  ) |>
+  cols_label(
+    size = "Tier", statistic = "H statistic",
+    df = "df", p_value = "p-value", n = "N"
+  ) |>
+  fmt_number(columns = c(statistic), decimals = 1) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0) |>
+  fmt_scientific(columns = p_value, decimals = 2) |>
+  tab_options(table.font.size = px(13), heading.align = "left")
+```
+
+The null is rejected at conventional levels in every tier. Governance and capital
+are not independent within any size category. The visual now supplies the *what*.
+
+### Two-panel figure: median trajectories + tail-heaviness ratio
+
+```{r}
+#| label: fig-governance-shape
+#| fig-width: 12
+#| fig-height: 5.8
+#| fig-cap: "Governance shapes the capital distribution differently across archetypes."
+
+# ── Per-cell summary statistics ─────────────────────────────────────────────
+gov_summary <- co |>
+  filter(governance != "Other") |>
+  group_by(size, governance) |>
+  summarise(
+    p10    = quantile(capital_stock, 0.10),
+    p25    = quantile(capital_stock, 0.25),
+    median = median(capital_stock),
+    mean   = mean(capital_stock),
+    p75    = quantile(capital_stock, 0.75),
+    p90    = quantile(capital_stock, 0.90),
+    n      = n(),
+    .groups = "drop"
+  ) |>
+  mutate(
+    mean_med  = mean / median,
+    gov_short = case_when(
+      str_detect(governance, "Beneficial") ~ "Beneficial Owner",
+      str_detect(governance, "Managing")   ~ "Managing Partner",
+      TRUE                                  ~ "Sole Entrepreneur"
+    ),
+    gov_short = factor(gov_short, levels = c(
+      "Sole Entrepreneur", "Managing Partner", "Beneficial Owner"
+    ))
+  )
+
+pal_gov_short <- c(
+  "Sole Entrepreneur" = "#d9a441",
+  "Managing Partner"  = "#5b8a9a",
+  "Beneficial Owner"  = "#1d3557"
+)
+
+dodge_w <- 0.45
+
+# ── Panel A: median trajectories with IQR + P10–P90 whiskers ────────────────
+p_level <- ggplot(
+  gov_summary,
+  aes(x = size, y = median, colour = gov_short, group = gov_short)
+) +
+  geom_linerange(aes(ymin = p10, ymax = p90),
+                 linewidth = 0.7, alpha = 0.50,
+                 position = position_dodge(width = dodge_w)) +
+  geom_linerange(aes(ymin = p25, ymax = p75),
+                 linewidth = 4.2, alpha = 0.30,
+                 position = position_dodge(width = dodge_w)) +
+  geom_line(linewidth = 1.3, alpha = 0.85,
+            position = position_dodge(width = dodge_w)) +
+  geom_point(size = 5, shape = 21, fill = "white", stroke = 2,
+             position = position_dodge(width = dodge_w)) +
+  scale_y_log10(
+    labels = label_number(scale_cut = cut_short_scale(), accuracy = 1),
+    breaks = c(1e5, 3e5, 1e6, 3e6, 1e7),
+    name   = "Capital stock (BRL, log scale)"
+  ) +
+  scale_colour_manual(
+    values = pal_gov_short, name = NULL,
+    guide  = guide_legend(override.aes = list(linewidth = 1.5, size = 4))
+  ) +
+  labs(
+    x = NULL,
+    subtitle = "(A)  Median capital with IQR (thick) and P10–P90 (thin)\n        Only Managing Partners scale upward across tiers"
+  ) +
+  theme_cwc() +
+  theme(
+    legend.position    = "top",
+    panel.grid.major.x = element_blank(),
+    plot.subtitle      = element_text(colour = "grey35", size = 11,
+                                      lineheight = 1.3, margin = margin(b = 10))
+  )
+
+# ── Panel B: mean ÷ median ratio (tail heaviness) ──────────────────────────
+p_tail <- ggplot(
+  gov_summary,
+  aes(x = size, y = mean_med, colour = gov_short, group = gov_short)
+) +
+  geom_hline(yintercept = 1, linewidth = 0.4,
+             colour = "grey70", linetype = "dashed") +
+  geom_line(linewidth = 1.3, alpha = 0.85) +
+  geom_point(size = 5, shape = 21, fill = "white", stroke = 2) +
+  # Label only the rightmost (Medium/Large) endpoint of each line
+  # — avoids label collision at Micro/Small where Sole Entrepreneur and
+  # Managing Partner ratios are similar
+  geom_text(
+    data = filter(gov_summary, size == "Medium/Large"),
+    aes(label = paste0(round(mean_med), "×")),
+    hjust = -0.4, fontface = "bold", size = 4.2, show.legend = FALSE
+  ) +
+  scale_y_log10(
+    breaks = c(1, 3, 10, 30, 100),
+    labels = function(x) paste0(x, "×"),
+    expand = expansion(mult = c(0.05, 0.22))
+  ) +
+  scale_x_discrete(expand = expansion(mult = c(0.10, 0.22))) +
+  scale_colour_manual(values = pal_gov_short, guide = "none") +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = "Mean ÷ median  (tail heaviness)",
+    subtitle = "(B)  Mean-to-median ratio\n        Tails are heavy in every cell, but the carrier shifts across tiers"
+  ) +
+  theme_cwc() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    plot.subtitle      = element_text(colour = "grey35", size = 11,
+                                      lineheight = 1.3, margin = margin(b = 10)),
+    plot.margin        = margin(10, 25, 10, 10)
+  )
+
+# ── Combine ────────────────────────────────────────────────────────────────
+(p_level | p_tail) +
+  plot_layout(widths = c(1.4, 1), guides = "collect") +
+  plot_annotation(
+    title    = "Managing Partners scale the median; capital tails migrate across archetypes",
+    subtitle = paste0(
+      "Capital distribution by owner archetype within each firm-size tier. ",
+      "Panel A: median trajectory with middle 80% range.\n",
+      "Panel B: mean ÷ median ratio captures tail heaviness — BO carries the tail at Micro; MP carries it at Medium/Large."
+    ),
+    caption  = caption_text,
+    theme    = theme_cwc()
+  ) &
+  theme(
+    plot.title      = element_text(face = "bold", size = 16, colour = "#1d3557"),
+    legend.position = "top"
+  )
+```
+
+### Interpretation
+
+Panel A's three trajectories give the level story:
+
+- **Managing Partners** are the only archetype whose median materially scales
+  with size: **300k → 360k → 1M** (a 3.3× increase from Micro to Medium/Large).
+  Active operators accumulate capital as firms grow — capital and operational
+  scale move together.
+- **Sole Entrepreneurs** show a flat median across Micro and Small (~300k),
+  with a modest uptick at Medium/Large (~394k). Solo proprietors face
+  information asymmetries that cap external capital access; revenue scale does
+  not translate into capital in the same way.
+- **Beneficial Owners** stay flat at 300k throughout — for this archetype, the
+  median is uninformative about firm size.
+
+Panel B's mean ÷ median ratios complicate the simple "Beneficial Owners carry
+the tail" story we initially expected. Capital distributions are heavy-tailed
+in nearly every cell (most ratios fall between 30× and 500×), but **which
+archetype carries the heaviest tail changes with firm size**:
+
+- **At Micro**, Beneficial Owners share the heaviest tail with Managing
+  Partners (~80× each), while Sole Entrepreneurs are the lightest (~30×). This
+  is the "capital-rich micro" pattern from the project framing: most BO micros
+  are tiny, but a holding-company minority hold enormous capital.
+- **At Small**, the pattern reorganizes. Managing Partners' tail grows sharply
+  (~300×), Beneficial Owners' tail moderates (~50×), and Sole Entrepreneurs'
+  tail collapses to near-symmetry (~2×). The Small tier appears to discipline
+  capital distributions — possibly because Brazil's revenue-band classifications
+  create selection pressures at the boundaries.
+- **At Medium/Large**, Managing Partners reach an extraordinary **526×** ratio,
+  Sole Entrepreneurs a **127×** ratio, and Beneficial Owners drop to **3×** —
+  the *lightest* tail in the entire panel. The largest active-management firms
+  include genuine industry titans whose capital dwarfs the typical MP firm.
+  Beneficial Owner firms classified as Medium/Large are, by contrast, a much
+  more uniform population — likely dominated by institutional investment
+  vehicles rather than the bimodal small-shell + mega-vehicle distribution
+  found at Micro.
+
+The structural finding is richer than a uniform "BO heavy-tail" story:
+
+- **Capital-tail composition migrates across archetypes as firms scale.** At
+  the small end, the tail belongs to passive ownership (holding-company shells
+  using BO governance). At the large end, the tail belongs to active
+  management (true industry champions). The two heavy tails point to two
+  structurally different phenomena that should not be conflated.
+- **The "capital-rich micro" finding is specifically a Micro × Beneficial
+  Owner phenomenon.** It does not generalize to other tiers — and the
+  heavy-tailed inequality at Medium/Large is a different question (extreme
+  inequality among genuine large firms) that would need its own analytical
+  frame.
+- **Sole Entrepreneurs are not flat in the strong sense.** Their median is
+  roughly flat, but their tail is volatile — collapsing at Small and resurging
+  at Medium/Large. The V-shape may reflect regulatory-boundary effects of
+  Brazil's revenue classifications, where firms strategically position
+  themselves at specific capital levels to access (or avoid) tier-specific
+  tax treatments.
+
+The governance premium is not uniform along any single axis. At each tier it
+has a different shape, and any size-targeted policy that treats these
+archetypes as equivalent within a tier will systematically misallocate. The
+next step — Part III — zooms in on the Micro tier specifically, where the
+BO-tail phenomenon is sharpest, to identify the legal-form channel through
+which capital-rich micros achieve their unusual endowment.
+
+## Methodological Notes
+
+- **Why Kruskal-Wallis rather than ANOVA.** Capital-stock distributions are
+  strongly right-skewed even after log transformation; ANOVA's normality
+  assumption is violated. Kruskal-Wallis operates on ranks and is robust to
+  this.
+- **Why a two-panel design rather than ridges.** Ridge plots show the full
+  distribution shape, which is appealing in principle. In practice,
+  capital-stock distributions are so heavy-tailed that the ridge for each cell
+  collapses into a near-spike at the lower end, with the upper tail rendered
+  as a faint trailing arm at any reasonable bandwidth. All nine size ×
+  governance cells then look visually similar even when their statistical
+  moments differ by orders of magnitude. The trajectory + tail-ratio
+  decomposition isolates the two moments (level, tail) that actually carry the
+  analytical story.
+- **Why mean-to-median ratio as the tail summary.** The ratio is scale-invariant
+  (insensitive to currency unit), bounded below by 1 for symmetric
+  distributions, and easy to read as "the mean is N times the median".
+  Alternatives like skewness or kurtosis are mathematically equivalent in
+  spirit but harder for non-statistical readers to interpret directly.
+- **Sensitivity of the ratio to extreme values.** The mean is by construction
+  pulled by upper-tail outliers, which makes the ratio a *combined* signal of
+  tail heaviness *and* outlier presence. At Medium/Large, where each
+  governance cell contains thousands rather than hundreds of thousands of
+  firms, a small number of mega-corporations can move the ratio dramatically.
+  The 526× value for Managing Partners at Medium/Large reflects a real
+  population-level fact (a handful of firms with capital in the hundreds of
+  millions of BRL), but its precise magnitude could shift across years or
+  registry vintages. The qualitative ranking — MP heaviest, BO lightest at
+  Medium/Large — is robust; the specific multiples should be read as
+  order-of-magnitude indicators rather than precise estimates.
+- **Excluding "Other" governance.** A residual category with heterogeneous
+  coding (state-owned representatives, foreign legal entities, etc.) is
+  excluded from the figure to keep archetype-level interpretation clean. It is
+  approximately 6% of observations.
+- **Why we dropped quantile regression here.** An earlier draft estimated
+  τ ∈ {0.10, 0.25, 0.50, 0.75, 0.90} regressions. The two-panel design
+  communicates the same finding (premium widens at the upper tail) more
+  directly and without the rank-conditioned interpretation that quantile
+  regression imposes. The distributional shape *is* the result.
+
+## Forward Link
+
+The most policy-relevant finding from this analysis is the **Micro × Beneficial
+Owner** cell: at the smallest tier, Beneficial Owners hold the heaviest tail,
+which is the statistical fingerprint of the "capital-rich micro" phenomenon
+that motivates this project. The development-policy question that follows is
+*which legal-form channel* turns that ownership pattern into a registered
+micro-enterprise with above-tier-typical capital. Part III ranks the
+legal-form × governance cells inside the micro tier and identifies the
+partnership-with-passive-equity structure as the dominant escape route — a
+result that overturns the popular "EIRELI-as-escape-route" framing. The
+Medium/Large tail behaviour (where Managing Partners reach a 526× mean/median
+ratio) is a different empirical phenomenon — extreme inequality among genuine
+large operating firms — and is not pursued further here, since it lies outside
+the small-business policy remit of this trilogy.

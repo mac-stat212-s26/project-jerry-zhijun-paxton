@@ -1,5 +1,494 @@
 ---
-title: "Member 1 First Name & Last Name Initial"
+title: "Capital Without Category — Part I"
+subtitle: "The universal power law: capital concentration across Brazilian firm-size tiers"
+author: "Zhijun He"
+date: "2026-02-25"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+    fig-dpi: 180
+    fig-align: center
+    fig-cap-location: bottom
+    df-print: paged
+execute:
+  warning: false
+  message: false
+  cache: true
 ---
 
-Your exploratory data analysis of the team datasets go here.
+## Background
+
+Brazil's official firm-size classification (Simples Nacional) is built on a single
+threshold: **annual gross revenue**. A sole proprietor earning 360,000 BRL is legally a
+"micro-enterprise" regardless of whether their declared capital stock is 50,000 BRL or
+5,000,000 BRL. This regulatory choice creates a natural experiment in the CNPJ registry:
+firms within the same legal category can have wildly different capital endowments.
+
+Earlier coverage of this dataset reported high Gini coefficients but reported them at
+the aggregate level, leaving open a question central to policy design: is the extreme
+concentration a *micro-enterprise pathology* — i.e., a problem specific to the smallest
+firms — or a *universal property* of the Brazilian formal sector?
+
+The answer matters. If concentration is concentrated in micros, raising thresholds or
+splitting micros into more granular tiers could bring meaningful redistribution. If
+concentration is universal, threshold reform is cosmetic — the same power-law sits
+behind every regulatory label, and revenue is the wrong targeting dimension.
+
+## Research Question
+
+> **Q1.** Is capital concentration in Brazilian formal-sector firms a feature of the
+> micro-enterprise category specifically, or is the same power-law signature visible
+> across every size tier?
+
+## Design Conventions
+
+```{r}
+#| label: setup-theme
+
+library(tidyverse)
+library(scales)
+library(patchwork)
+library(boot)        # bootstrap Gini CIs
+library(gt)          # publication-quality tables
+
+# ── Shared palette ──────────────────────────────────────────────────────────
+pal_size <- c(
+  "Micro"        = "#c3553a",   # terracotta
+  "Small"        = "#d9a441",   # amber
+  "Medium/Large" = "#2a5a6b"    # deep teal
+)
+
+pal_segment <- c(
+  "Top 1%"     = "#1d3557",
+  "Next 9%"    = "#457b9d",
+  "Next 40%"   = "#a8dadc",
+  "Bottom 50%" = "#e9ecef"
+)
+
+# ── Shared theme ────────────────────────────────────────────────────────────
+theme_cwc <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title        = element_text(face = "bold", size = base_size + 2,
+                                       colour = "#1d3557", margin = margin(b = 4)),
+      plot.subtitle     = element_text(colour = "grey35", size = base_size - 2,
+                                       lineheight = 1.35, margin = margin(b = 18)),
+      plot.caption      = element_text(colour = "grey55", size = base_size - 5,
+                                       hjust = 0, margin = margin(t = 12)),
+      plot.title.position   = "plot",
+      plot.caption.position = "plot",
+      strip.text        = element_text(face = "bold", size = base_size - 1,
+                                       colour = "#1d3557"),
+      strip.background  = element_rect(fill = "grey96", colour = NA),
+      panel.grid.minor  = element_blank(),
+      panel.grid.major  = element_line(colour = "grey92", linewidth = 0.3),
+      panel.spacing     = unit(1.4, "lines"),
+      legend.position   = "top",
+      legend.title      = element_text(face = "bold", size = base_size - 2),
+      legend.text       = element_text(size = base_size - 2),
+      axis.title        = element_text(colour = "grey30", size = base_size - 2),
+      axis.text         = element_text(colour = "grey40", size = base_size - 3)
+    )
+}
+
+caption_text <- paste(
+  "Source: Brazilian CNPJ Registry · TidyTuesday 2026 Wk 4 (Extended)",
+  "· Boyd, He & Miao · 2026-02-25"
+)
+```
+
+## Data Preparation
+
+```{r}
+#| label: data-prep
+
+companies <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
+  show_col_types = FALSE
+)
+
+co <- companies |>
+  filter(
+    !is.na(company_size),
+    !is.na(capital_stock),
+    !is.na(owner_qualification),
+    capital_stock > 0
+  ) |>
+  mutate(
+    size = case_when(
+      company_size == "micro-enterprise" ~ "Micro",
+      company_size == "small-enterprise" ~ "Small",
+      TRUE                               ~ "Medium/Large"
+    ),
+    size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
+    log_capital = log10(capital_stock)
+  )
+
+cat("Observations after cleaning:", comma(nrow(co)), "\n")
+cat("Tier counts:\n"); print(count(co, size))
+```
+
+## Descriptive Snapshot
+
+Before any inequality measure, a sanity check on the raw distribution by tier. Means
+exceed medians by an order of magnitude in every tier — the first hint that the
+distribution is not just skewed but heavy-tailed.
+
+```{r}
+#| label: tbl-descriptive
+
+co |>
+  group_by(size) |>
+  summarise(
+    n        = n(),
+    mean_cap = mean(capital_stock),
+    p50      = median(capital_stock),
+    p75      = quantile(capital_stock, 0.75),
+    p90      = quantile(capital_stock, 0.90),
+    p99      = quantile(capital_stock, 0.99),
+    max_cap  = max(capital_stock),
+    .groups  = "drop"
+  ) |>
+  gt() |>
+  tab_header(
+    title    = md("**Capital stock by firm size tier**"),
+    subtitle = "All values in BRL · means dwarf medians in every tier"
+  ) |>
+  cols_label(
+    size = "Tier", n = "N",
+    mean_cap = "Mean", p50 = "Median",
+    p75 = "P75", p90 = "P90", p99 = "P99",
+    max_cap = "Max"
+  ) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0) |>
+  fmt_number(columns = c(mean_cap, p50, p75, p90, p99, max_cap),
+             suffixing = TRUE, decimals = 1) |>
+  tab_options(
+    table.font.size            = px(13),
+    heading.align              = "left",
+    row_group.background.color = "#f4f4f4"
+  ) |>
+  tab_source_note(md("*Source: Brazilian CNPJ Registry*"))
+```
+
+## Analysis: Concentration is Universal Across Tiers
+
+### Methodological motivation
+
+Plain Lorenz curves are a poor visualization tool when inequality is extreme. When the
+top 1% of firms holds 96–99% of capital, three Lorenz curves at Gini 0.98, 0.99, 0.995
+plot as nearly identical near-L shapes — visual indistinguishability where the
+analytically interesting separation actually lives. Two adjustments make the structure
+readable:
+
+1. **Discrete top-fraction ladder.** Instead of drawing the full Lorenz curve through
+   every firm, we evaluate the cumulative share of capital at seven specific
+   top-fraction breakpoints (Top 0.1%, 0.5%, 1%, 5%, 10%, 25%, 50%) and connect them
+   on a log-scaled x-axis. This avoids two artefacts of full-data Lorenz curves —
+   visual aliasing from millions of overplotted points, and the optical illusion of a
+   "rapid rise" near the top that's actually just the geometry of an L. Each labelled
+   point is a directly readable fact: "the top 1% of Micro firms holds 96% of Micro
+   capital."
+2. **Stacked rank-bucket decomposition.** Convert the Gini coefficient into a directly
+   readable percentage by reporting the share of each tier's capital held by the top
+   1%, next 9%, next 40%, and bottom 50%. This is harder to misread than Gini and
+   communicates immediately to non-technical audiences.
+
+We also report **bootstrap 95% confidence intervals on the Gini point estimates**
+(B = 1,000 resamples per tier) to confirm that the small numerical differences between
+tier Ginis are not artefacts of sample variance. With N at this scale, the CIs are
+mechanically tight — but reporting them is good discipline.
+
+### Bootstrap Gini estimation
+
+```{r}
+#| label: gini-bootstrap
+
+gini <- function(x) {
+  x <- sort(x[!is.na(x) & x > 0])
+  n <- length(x)
+  if (n < 2L) return(NA_real_)
+  2 * sum(seq_len(n) * x) / (n * sum(x)) - (n + 1) / n
+}
+
+gini_stat <- function(data, i) gini(data[i])
+
+set.seed(2026)
+gini_ci <- co |>
+  group_by(size) |>
+  group_modify(~ {
+    b  <- boot(.x$capital_stock, gini_stat, R = 1000)
+    ci <- boot.ci(b, type = "perc", conf = 0.95)
+    tibble(
+      g     = b$t0,
+      lower = ci$percent[4L],
+      upper = ci$percent[5L],
+      n     = nrow(.x)
+    )
+  }) |>
+  ungroup()
+
+# Top-1% share — robust complement to Gini in extreme-tail regimes
+top1_share <- co |>
+  group_by(size) |>
+  arrange(desc(capital_stock), .by_group = TRUE) |>
+  summarise(
+    top1 = sum(capital_stock[seq_len(ceiling(n() * 0.01))]) / sum(capital_stock),
+    .groups = "drop"
+  )
+
+gini_ci |>
+  left_join(top1_share, by = "size") |>
+  gt() |>
+  tab_header(
+    title    = md("**Bootstrapped Gini coefficients and top-1% capital shares**"),
+    subtitle = "B = 1,000 percentile bootstrap resamples per tier"
+  ) |>
+  cols_label(
+    size = "Tier", g = "Gini",
+    lower = "CI Lower", upper = "CI Upper",
+    n = "N", top1 = "Top 1% share"
+  ) |>
+  fmt_number(columns = c(g, lower, upper), decimals = 4) |>
+  fmt_percent(columns = top1, decimals = 1) |>
+  fmt_number(columns = n, use_seps = TRUE, decimals = 0) |>
+  tab_options(table.font.size = px(13), heading.align = "left")
+```
+
+### Two-panel concentration figure
+
+```{r}
+#| label: fig-concentration
+#| fig-width: 12
+#| fig-height: 6.0
+#| fig-cap: "Capital concentration is near-total in every Brazilian firm-size tier."
+
+# ── Panel A data: cumulative share at discrete top-fraction breakpoints ────
+top_fracs  <- c(0.001, 0.005, 0.01, 0.05, 0.10, 0.25, 0.50)
+top_labels <- c("Top\n0.1%", "Top\n0.5%", "Top\n1%", "Top\n5%",
+                "Top\n10%", "Top\n25%", "Top\n50%")
+
+cum_share_at <- function(x, f) {
+  x_sorted <- sort(x, decreasing = TRUE)
+  k <- max(1L, ceiling(length(x_sorted) * f))
+  sum(x_sorted[seq_len(k)]) / sum(x_sorted)
+}
+
+ladder_data <- co |>
+  group_by(size) |>
+  group_modify(~ tibble(
+    top_frac  = top_fracs,
+    cum_share = vapply(top_fracs,
+                       function(f) cum_share_at(.x$capital_stock, f),
+                       numeric(1))
+  )) |>
+  ungroup()
+
+# Legend labels: bootstrap-confirmed Gini, in the order Micro / Small / Med-Large
+gini_in_order <- gini_ci$g[match(c("Micro", "Small", "Medium/Large"),
+                                  as.character(gini_ci$size))]
+legend_labels <- sprintf("%s — Gini %.3f",
+                         c("Micro", "Small", "Medium/Large"),
+                         gini_in_order)
+
+# ── Panel A: discrete ladder concentration chart ───────────────────────────
+p_ladder <- ggplot(ladder_data,
+                   aes(x = top_frac, y = cum_share,
+                       colour = size, group = size)) +
+  geom_line(linewidth = 1.4, alpha = 0.9) +
+  geom_point(size = 4.5, shape = 21, fill = "white", stroke = 1.8) +
+  # Direct labels at the two anchor points readers care about
+  geom_text(
+    data = filter(ladder_data, top_frac %in% c(0.001, 0.01)),
+    aes(label = scales::percent(cum_share, accuracy = 1)),
+    vjust = -1.6, fontface = "bold", size = 3.4,
+    show.legend = FALSE
+  ) +
+  scale_x_log10(
+    breaks = top_fracs,
+    labels = top_labels,
+    expand = expansion(mult = c(0.05, 0.05))
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    limits = c(0.55, 1.07),
+    breaks = c(0.6, 0.7, 0.8, 0.9, 1.0),
+    expand = c(0, 0),
+    name   = "Cumulative share of tier's capital"
+  ) +
+  scale_colour_manual(
+    values = pal_size,
+    labels = legend_labels,
+    name   = NULL
+  ) +
+  labs(
+    x = "Top fraction of firms (log scale)",
+    subtitle = "(A)  Even the top 0.1% holds the majority of every tier's capital\n        Three near-identical curves — concentration is universal across tiers"
+  ) +
+  theme_cwc() +
+  theme(
+    legend.position    = "top",
+    plot.subtitle      = element_text(colour = "grey35", size = 11,
+                                      lineheight = 1.3, margin = margin(b = 10)),
+    panel.grid.major.x = element_line(colour = "grey94", linewidth = 0.25),
+    axis.text.x        = element_text(size = 9, lineheight = 0.9)
+  )
+
+# ── Panel B data: stacked rank-bucket decomposition ────────────────────────
+decomp <- co |>
+  group_by(size) |>
+  arrange(desc(capital_stock), .by_group = TRUE) |>
+  mutate(
+    rank_pct = row_number() / n(),
+    segment  = case_when(
+      rank_pct <= 0.01 ~ "Top 1%",
+      rank_pct <= 0.10 ~ "Next 9%",
+      rank_pct <= 0.50 ~ "Next 40%",
+      TRUE             ~ "Bottom 50%"
+    ),
+    segment  = factor(segment,
+                      levels = c("Bottom 50%", "Next 40%", "Next 9%", "Top 1%"))
+  ) |>
+  group_by(size, segment) |>
+  summarise(cap = sum(capital_stock), .groups = "drop") |>
+  group_by(size) |>
+  mutate(share = cap / sum(cap)) |>
+  ungroup()
+scale_y_continuous(
+  labels = percent_format(),
+  limits = c(0.5, 1.02),     # 改这里：从 0.6 → 0.5
+  expand = c(0, 0),
+  name   = "Cumulative share of tier's capital"
+)
+
+# ── Panel B: stacked decomposition with clean Top-1% callout ──────────────
+p_decomp <- ggplot(decomp, aes(x = size, y = share, fill = segment)) +
+  geom_col(width = 0.70, colour = "white", linewidth = 1.5) +
+  # Big bold percentage centered in the Top 1% segment
+  geom_text(
+    data = filter(decomp, segment == "Top 1%"),
+    aes(label = percent(share, accuracy = 1)),
+    position    = position_stack(vjust = 0.5),
+    colour      = "white", fontface = "bold",
+    size        = 9,
+    show.legend = FALSE
+  ) +
+  scale_fill_manual(
+    values = pal_segment,
+    breaks = c("Top 1%", "Next 9%", "Next 40%", "Bottom 50%"),
+    name   = NULL
+  ) +
+  scale_y_continuous(
+    labels = percent_format(),
+    expand = c(0, 0),
+    limits = c(0, 1.02),
+    name   = "Share of tier's total capital"
+  ) +
+  labs(
+    x = NULL,
+    subtitle = "(B)  Top 1% holds 96–99% in every tier\n        The remaining 99% of firms is barely a sliver"
+  ) +
+  theme_cwc() +
+  theme(
+    legend.position    = "top",
+    panel.grid.major.x = element_blank(),
+    plot.subtitle      = element_text(colour = "grey35", size = 11,
+                                      lineheight = 1.3, margin = margin(b = 10))
+  )
+
+
+# ── Combine ────────────────────────────────────────────────────────────────
+(p_ladder | p_decomp) +
+  plot_layout(widths = c(1.55, 1)) +
+  plot_annotation(
+    title    = "Capital concentration is near-total in every Brazilian firm-size tier",
+    subtitle = paste0(
+      "All three tiers exhibit Gini > 0.98 with the top 1% holding 96–99% of capital. ",
+      "'Micro-enterprise' is not uniquely unequal —\n",
+      "the same power-law structure sits behind every regulatory category."
+    ),
+    caption  = caption_text,
+    theme    = theme_cwc()
+  ) &
+  theme(plot.title = element_text(face = "bold", size = 16, colour = "#1d3557"))
+```
+### Interpretation
+
+Three findings emerge.
+
+**Even the top 0.1% already holds the majority.** Panel A drills below
+Panel B's headline. The "top 1% holds 96–99%" framing is itself an
+understatement — even the top 0.1% of firms (one in a thousand) already
+holds 87–96% of each tier's capital. Roughly nine-tenths of the top-1%
+concentration is delivered by the top 0.1% alone. Past the Top 1% mark the
+curves are flat at ~99%: the remaining 99% of firms is collectively a
+sliver. The tier ordering at the apex (Medium/Large 96% > Micro 87%) is
+partly an N effect — Medium/Large's "top 0.1%" is a numerically tighter set
+of firms — and should not be read as "Medium/Large is more unequal than
+Micro." What the visual confirms is universality of *shape*: the same
+logarithmic-rise-to-plateau structure sits behind every regulatory tier.
+
+**The Ginis are statistically distinguishable but economically negligible.**
+All three tier Ginis exceed 0.98, with bootstrap 95% CIs that are tight and
+non-overlapping. Statistically the tiers differ; substantively all three
+are pinned against the ceiling of the Gini scale. No reasonable inequality
+target distinguishes 0.985 from 0.992.
+
+**Top-1% capital share is the dominant fact.** In each tier, the top one
+percent of firms holds 96–99% of that tier's capital. The bottom 50% holds
+less than one percent. This is not "high inequality" in the colloquial
+sense; it is a power-law in which nearly all economic mass sits at the top
+of the distribution. Panel B converts this into a directly readable
+percentage: in every tier, the top 1% bar is essentially the entire bar.
+
+The "capital trap" narrative attached to micro-enterprises in earlier
+framings is misplaced. The concentration is **structural to the entire
+Brazilian formal sector**, not specific to the micro tier. This reframes
+the analytical agenda: if the inequality *shape* is universal, the
+substantive question is no longer *which tier is unequal* but *who occupies
+the top of each tier* — and that question cannot be answered by size
+classification. It requires governance information.
+
+## Methodological Notes
+
+- **Why a discrete ladder rather than a full Lorenz curve.** A continuous Lorenz or
+  concentration curve drawn through every firm (N > 100,000 per tier) introduces
+  rendering artefacts: anti-aliasing on dense overplotted lines and visual aliasing
+  near the steep top end. The seven-point ladder is computationally identical at the
+  evaluated points (cumulative share at top f% is exactly the cumsum at the f-quantile
+  of the sorted distribution) but immune to those artefacts and exactly labellable.
+  The two visual claims — that the curves nearly coincide, and that each labelled
+  anchor is precise — are easier to defend on a ladder than on a continuous curve
+  with millions of plotted segments.
+- **Gini stability at extreme concentration.** When the top firms dominate, Gini
+  becomes mechanically close to 1 and economically meaningful changes are compressed
+  into the third decimal. Top-1% share is more interpretable in this regime and
+  invariant to the lower-tail definition.
+- **Bootstrap sample size.** With N > 100,000 per tier, B = 1,000 percentile
+  bootstrap resamples produce CIs in the fourth decimal place. We report them as a
+  discipline against assuming a single resampling could change the qualitative
+  finding, not because they add new information.
+- **Excluding zero / missing capital.** Reported zero capital often reflects
+  registry-coding artefacts (entities awaiting capital declaration after
+  registration) rather than genuinely zero-capital operating firms. Including zeros
+  would inflate the bottom-share estimates artifactually.
+- **Why not Theil decomposition?** A Theil-T within-vs-between decomposition is a
+  natural next step, and earlier drafts of this analysis included one. We dropped
+  it here because the universal-power-law finding makes the *between-tier* component
+  uninformative: when every tier has Gini > 0.98, decomposing tells us only that
+  within-tier inequality dominates, which we already know visually. The decomposition
+  is a useful exercise when between-tier differences carry information; here, they
+  don't.
+
+## Forward Link
+
+If concentration is universal but the question is *who sits at the top of each tier*,
+the analytical next step is to ask whether **governance archetype** — the legal role
+of the controlling person — predicts capital independently of size. Part II takes
+that question, examining whether governance shifts the *level* of capital, the
+*variance* of capital, or both.

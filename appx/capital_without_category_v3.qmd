@@ -1,0 +1,503 @@
+---
+title: "Capital Without Category: Governance, Inequality, and the Micro-Enterprise Paradox in Brazil"
+subtitle: "TidyTuesday 2026 · Week 4 (Extended) · Brazilian Companies (CNPJ)"
+author: "Zhijun He"
+date: "2026-02-25"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 2
+    code-fold: true
+    code-summary: "Show code"
+    fig-dpi: 180
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+## Background
+
+The previous analysis of this dataset established a macro-level capital paradox: the Brazilian
+formal sector exhibits extreme capital concentration, with Gini coefficients above 0.98 in every
+size tier. That finding tells us the *shape* of inequality but not its *sources*. It also treats
+each size category as internally homogeneous, which it is not.
+
+Brazil's official firm-size classification (Simples Nacional) is based on **annual gross revenue**,
+not capital stock. A sole proprietor earning 360,000 BRL per year is legally a "micro-enterprise"
+regardless of whether they hold 180,000 BRL or 10,000,000 BRL in declared capital stock. This
+classification logic creates a natural experiment embedded in the data: firms within the same
+regulatory category can have wildly different capital endowments. The spread *within* size tiers
+is as analytically interesting as the gaps *between* them.
+
+A second underexplored dimension is governance. The `owner_qualification` field records the
+legal role of the controlling person: a Managing Partner who actively runs the business, a Beneficial
+Owner who holds equity but may be a passive investor or part of a holding-company chain, or a
+solo Entrepreneur operating under their own identity. These governance archetypes map onto well-
+established predictions from agency theory: passive beneficial ownership is associated with access
+to external capital, while sole entrepreneurs face the highest information asymmetries with lenders.
+
+## Research Questions
+
+Three analytical questions guide this extended analysis:
+
+1. **Within-tier inequality:** Are micro-enterprises themselves internally unequal in capital
+   endowments, or is the category relatively flat?
+2. **Governance as a capital predictor:** Does owner qualification predict capital accumulation
+   *independently* of firm size, and by how much?
+3. **The "capital-rich micro":** Among micro-enterprises with unusually high capital stock, what
+   governance and legal-form features distinguish them from the capital-poor majority?
+
+## Design Conventions
+
+```{r}
+#| label: setup-theme
+
+library(tidyverse)
+library(scales)
+library(ggridges)
+library(patchwork)
+
+# ── Shared palette ───────────────────────────────────────────────────────────
+pal_size <- c(
+  "Micro"        = "#c3553a",   # terracotta
+  "Small"        = "#d9a441",   # amber
+  "Medium/Large" = "#2a5a6b"    # deep teal
+)
+
+pal_gov <- c(
+  "Sole Entrepreneur"                    = "#d9a441",   # amber (solo)
+  "Managing Partner /\nAdministrator"    = "#5b8a9a",   # slate blue (active)
+  "Beneficial Owner\n(passive/investor)" = "#1d3557"    # deep navy (passive)
+)
+
+# ── Shared theme ─────────────────────────────────────────────────────────────
+theme_cwc <- function(base_size = 13) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.title        = element_text(face = "bold", size = base_size + 2,
+                                       colour = "#1d3557", margin = margin(b = 4)),
+      plot.subtitle     = element_text(colour = "grey35", size = base_size - 2,
+                                       lineheight = 1.35, margin = margin(b = 18)),
+      plot.caption      = element_text(colour = "grey55", size = base_size - 5,
+                                       hjust = 0, margin = margin(t = 12)),
+      plot.title.position   = "plot",
+      plot.caption.position = "plot",
+      strip.text        = element_text(face = "bold", size = base_size - 1,
+                                       colour = "#1d3557"),
+      strip.background  = element_rect(fill = "grey96", colour = NA),
+      panel.grid.minor  = element_blank(),
+      panel.grid.major  = element_line(colour = "grey92", linewidth = 0.3),
+      panel.spacing     = unit(1.4, "lines"),
+      legend.position   = "top",
+      legend.title      = element_text(face = "bold", size = base_size - 2),
+      legend.text       = element_text(size = base_size - 2),
+      axis.title        = element_text(colour = "grey30", size = base_size - 2),
+      axis.text         = element_text(colour = "grey40", size = base_size - 3)
+    )
+}
+
+caption_text <- "Source: Brazilian CNPJ Registry · TidyTuesday 2026 Wk 4 (Extended) · Zhijun He · 2026-02-25"
+```
+
+## Data Preparation
+
+```{r}
+#| label: data-prep
+
+companies <- read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-01-27/companies.csv",
+  show_col_types = FALSE
+)
+
+co <- companies |>
+  filter(!is.na(company_size), !is.na(capital_stock), !is.na(owner_qualification),
+         capital_stock > 0) |>
+  mutate(
+    size = case_when(
+      company_size == "micro-enterprise" ~ "Micro",
+      company_size == "small-enterprise" ~ "Small",
+      TRUE                               ~ "Medium/Large"
+    ),
+    size = factor(size, levels = c("Micro", "Small", "Medium/Large")),
+
+    governance = case_when(
+      str_detect(owner_qualification, regex("beneficial owner", ignore_case = TRUE))         ~ "Beneficial Owner\n(passive/investor)",
+      str_detect(owner_qualification, regex("entrepreneur|business owner", ignore_case = TRUE)) ~ "Sole Entrepreneur",
+      str_detect(owner_qualification, regex("managing partner|administrator", ignore_case = TRUE)) ~ "Managing Partner /\nAdministrator",
+      TRUE ~ "Other"
+    ),
+    governance = factor(governance, levels = c(
+      "Sole Entrepreneur",
+      "Managing Partner /\nAdministrator",
+      "Beneficial Owner\n(passive/investor)",
+      "Other"
+    )),
+
+    log_capital = log10(capital_stock),
+
+    capital_q75_micro = quantile(capital_stock[size == "Micro"], 0.75, na.rm = TRUE),
+    is_capital_rich_micro = (size == "Micro") & (capital_stock >= capital_q75_micro)
+  )
+
+cat("Observations:", comma(nrow(co)), "\n")
+cat("Governance archetypes:\n"); print(count(co, governance, sort = TRUE))
+cat("\nCapital-rich micro threshold: BRL ",
+    comma(unique(co$capital_q75_micro[!is.na(co$capital_q75_micro)])[1]), "\n", sep = "")
+```
+
+## Visualization 1 — The Power-Law Signature of Brazilian Capital
+
+A plain Lorenz curve compresses the story because every tier is extremely concentrated — the
+three Ginis (all above 0.98) plot as almost the same curve. To read the structure honestly, we
+need two views: a log-rank concentration curve that separates the tiers where the action lives,
+and a direct decomposition of who sits at the top.
+
+```{r}
+#| label: fig-lorenz-power
+#| fig-width: 12
+#| fig-height: 5.8
+
+# ── Gini helper ─────────────────────────────────────────────────────────────
+gini <- function(x) {
+  x <- sort(x[!is.na(x) & x > 0])
+  n <- length(x)
+  2 * sum((seq_len(n) / n) * (x / sum(x))) - (n + 1) / n
+}
+
+# Compute Gini + Top 1% share per tier; burn both into the legend label
+tier_stats <- co |>
+  group_by(size) |>
+  summarise(
+    g    = gini(capital_stock),
+    top1 = sum(sort(capital_stock, decreasing = TRUE)[1:ceiling(n() * 0.01)]) /
+           sum(capital_stock),
+    .groups = "drop"
+  ) |>
+  mutate(
+    label = sprintf("%-13s   Gini %.3f    Top 1%% holds %s",
+                    size, g, percent(top1, accuracy = 1))
+  )
+
+# ── Panel A: Concentration curve on log-x, zero in-plot annotations ─────────
+conc_curve <- co |>
+  group_by(size) |>
+  arrange(desc(capital_stock), .by_group = TRUE) |>
+  mutate(
+    rank_pct = row_number() / n(),
+    cum_top  = cumsum(capital_stock) / sum(capital_stock)
+  ) |>
+  ungroup() |>
+  filter(rank_pct <= 0.5)
+
+p_conc <- ggplot(conc_curve, aes(x = rank_pct, y = cum_top, colour = size)) +
+  annotate("segment", x = 0.01, xend = 0.01, y = 0, yend = 1,
+           colour = "grey75", linetype = "dashed", linewidth = 0.45) +
+  annotate("text", x = 0.01, y = 1.04, label = "Top 1%",
+           colour = "grey40", size = 3.3, fontface = "italic") +
+  geom_line(linewidth = 1.5, alpha = 0.92) +
+  scale_x_log10(
+    breaks = c(0.001, 0.01, 0.1, 0.5),
+    labels = c("Top 0.1%", "Top 1%", "Top 10%", "Top 50%"),
+    expand = expansion(mult = c(0.02, 0.05))
+  ) +
+  scale_y_continuous(
+    labels = percent_format(),
+    limits = c(0, 1.08),
+    expand = c(0, 0),
+    name   = "Cumulative share of tier's capital"
+  ) +
+  scale_colour_manual(values = pal_size,
+                      labels = tier_stats$label,
+                      name   = NULL) +
+  labs(
+    x = "Rank of firms (log scale, highest capital first) →",
+    subtitle = "(A)  Concentration curve — log-x rank reveals the separation\n        between tiers that linear Lorenz cannot show"
+  ) +
+  theme_cwc() +
+  theme(
+    legend.position      = c(0.02, 0.98),
+    legend.justification = c(0, 1),
+    legend.background    = element_rect(fill = alpha("white", 0.9), colour = NA),
+    legend.key.width     = unit(1.5, "lines"),
+    legend.text          = element_text(family = "mono", size = 10),
+    plot.subtitle        = element_text(colour = "grey35", size = 11,
+                                        lineheight = 1.3, margin = margin(b = 10))
+  )
+
+# ── Panel B: Stacked decomposition by rank bucket ───────────────────────────
+decomp <- co |>
+  group_by(size) |>
+  arrange(desc(capital_stock), .by_group = TRUE) |>
+  mutate(
+    rank_pct = row_number() / n(),
+    segment  = case_when(
+      rank_pct <= 0.01 ~ "Top 1%",
+      rank_pct <= 0.10 ~ "Next 9%",
+      rank_pct <= 0.50 ~ "Next 40%",
+      TRUE             ~ "Bottom 50%"
+    ),
+    segment  = factor(segment,
+                      levels = c("Bottom 50%", "Next 40%", "Next 9%", "Top 1%"))
+  ) |>
+  group_by(size, segment) |>
+  summarise(cap = sum(capital_stock), .groups = "drop") |>
+  group_by(size) |>
+  mutate(share = cap / sum(cap)) |>
+  ungroup()
+
+pal_segment <- c(
+  "Top 1%"     = "#1d3557",
+  "Next 9%"    = "#457b9d",
+  "Next 40%"   = "#a8dadc",
+  "Bottom 50%" = "#e9ecef"
+)
+
+p_decomp <- ggplot(decomp, aes(x = size, y = share, fill = segment)) +
+  geom_col(width = 0.62, colour = "white", linewidth = 1.4) +
+  geom_text(
+    data = filter(decomp, share >= 0.04),   # suppress tiny stray labels
+    aes(label = percent(share, accuracy = 1),
+        colour = segment %in% c("Top 1%", "Next 9%")),
+    position = position_stack(vjust = 0.5),
+    fontface = "bold", size = 4, show.legend = FALSE
+  ) +
+  scale_fill_manual(
+    values = pal_segment,
+    breaks = c("Top 1%", "Next 9%", "Next 40%", "Bottom 50%"),
+    name   = NULL
+  ) +
+  scale_colour_manual(values = c(`TRUE` = "white", `FALSE` = "grey25")) +
+  scale_y_continuous(labels = percent_format(),
+                     expand = c(0, 0),
+                     name   = "Share of tier's total capital") +
+  labs(
+    x = NULL,
+    subtitle = "(B)  In every tier, the top 1% of firms holds ~96–99%\n        of the tier's capital. The bottom half is a sliver."
+  ) +
+  theme_cwc() +
+  theme(
+    legend.position    = "top",
+    panel.grid.major.x = element_blank(),
+    plot.subtitle      = element_text(colour = "grey35", size = 11,
+                                      lineheight = 1.3, margin = margin(b = 10))
+  )
+
+# ── Combine ─────────────────────────────────────────────────────────────────
+(p_conc | p_decomp) +
+  plot_layout(widths = c(1.15, 1)) +
+  plot_annotation(
+    title    = "Capital concentration is near-total in every Brazilian firm-size tier",
+    subtitle = "Gini coefficients exceed 0.98 across Micro, Small, and Medium/Large — 'micro-enterprise' is not uniquely unequal.\nThe capital trap is a universal power-law structure, not a feature of small firms.",
+    caption  = caption_text,
+    theme    = theme_cwc()
+  ) &
+  theme(plot.title = element_text(face = "bold", size = 16, colour = "#1d3557"))
+```
+
+Panel A uses a log-scaled rank axis to surface a separation that linear Lorenz curves flatten
+away. The legend carries the precise numbers: each tier's Gini and its top-1% capital share.
+Panel B decomposes the same fact along a cleaner axis — every tier's top 1% of firms holds
+roughly 96–99% of that tier's capital, while the bottom half is a sliver barely visible at the
+top of each bar. The "capital trap" described in earlier work is not a peculiarity of
+micro-enterprises. It is a **universal power-law structure** across the Brazilian formal sector.
+This reframes the rest of the analysis: what differentiates tiers is not their inequality, but
+the *who* at the top — the question governance can answer.
+
+## Visualization 2 — Governance as a Distributional Shape, Not Just a Level
+
+```{r}
+#| label: fig-governance-ridges
+#| fig-width: 12
+#| fig-height: 6.2
+
+gov_stats <- co |>
+  filter(governance != "Other") |>
+  group_by(size, governance) |>
+  summarise(
+    median_cap = median(capital_stock),
+    mean_cap   = mean(capital_stock),
+    p90_cap    = quantile(capital_stock, 0.90),
+    n          = n(),
+    .groups    = "drop"
+  ) |>
+  mutate(
+    med_lab = paste0("median ", number(median_cap, scale = 1e-3, suffix = "k",
+                                       big.mark = ",", accuracy = 1))
+  )
+
+ggplot(
+  co |> filter(governance != "Other"),
+  aes(x = log_capital, y = governance, fill = governance)
+) +
+  geom_density_ridges(
+    alpha = 0.85, scale = 0.92, rel_min_height = 0.01,
+    quantile_lines = TRUE, quantiles = 2,
+    colour = "white", linewidth = 0.45
+  ) +
+  # mean marker (red tick) — surfaces the heavy-tail of Beneficial Owners
+  geom_segment(
+    data = gov_stats,
+    aes(x = log10(mean_cap), xend = log10(mean_cap),
+        y = as.numeric(governance) - 0.02,
+        yend = as.numeric(governance) + 0.38),
+    inherit.aes = FALSE,
+    colour = "#c3553a", linewidth = 0.8
+  ) +
+  # median label placed above the ridge
+  geom_text(
+    data = gov_stats,
+    aes(x = log10(median_cap), y = as.numeric(governance) + 0.72,
+        label = med_lab),
+    inherit.aes = FALSE,
+    size = 3.0, colour = "grey25", hjust = 0.5
+  ) +
+  facet_wrap(~size, nrow = 1) +
+  scale_fill_manual(values = pal_gov, guide = "none") +
+  scale_x_continuous(
+    breaks = c(4, 5, 6, 7, 8),
+    labels = c("10k", "100k", "1M", "10M", "100M"),
+    name   = "Capital stock (BRL, log scale)",
+    expand = expansion(mult = c(0.02, 0.04))
+  ) +
+  scale_y_discrete(expand = expansion(add = c(0.3, 1.1))) +
+  labs(
+    title    = "Governance shapes the distribution — Managing Partners lead the median, Beneficial Owners carry the tail",
+    subtitle = "Density ridges show capital-stock distribution by owner archetype within each size tier.\nWhite line = median  •  Red tick = mean  •  X-axis: log₁₀ scale",
+    y        = NULL,
+    caption  = caption_text
+  ) +
+  theme_cwc() +
+  theme(panel.grid.major.y = element_blank())
+```
+
+The refined picture flips the original interpretation. Looking at medians:
+
+- **Managing Partners** hold the highest median capital, and — crucially — they are the only
+  archetype whose median *scales with firm size*: 300k at Micro, 360k at Small, **1,000k at
+  Medium/Large**. Active operators accumulate capital as they grow.
+- **Sole Entrepreneurs** show a flat median (~300k) that barely moves across tiers — consistent
+  with the information-asymmetry prediction from agency theory.
+- **Beneficial Owners** are the most distinctive: their median is low and flat (~300k across all
+  three tiers), but the mean (red tick) sits far to the right of the median, and the distribution
+  has a visible long right tail. This is a **heavy-tail archetype** — most BO firms are small,
+  but a minority hold enormous capital. That shape is the statistical fingerprint of
+  holding-company architecture: passive ownership is rare, and when it appears, it spans the
+  full range from shell companies to major investment vehicles.
+
+The governance premium, then, is not uniform. It shows up as a *level premium* for Managing
+Partners (especially in larger tiers) and as a *variance premium* for Beneficial Owners. Policies
+that assume a single governance hierarchy miss this distributional shape.
+
+## Visualization 3 — The Escape Route Is a Partnership, Not an LLC
+
+```{r}
+#| label: fig-escape
+#| fig-width: 11
+#| fig-height: 6
+
+micro_profile <- co |>
+  filter(size == "Micro", governance != "Other") |>
+  mutate(
+    legal_short = case_when(
+      str_detect(legal_nature, "LLC")                 ~ "LLC",
+      str_detect(legal_nature, "Sole Proprietorship") ~ "Sole\nProprietary",
+      str_detect(legal_nature, "Individual Limited")  ~ "EIRELI",
+      str_detect(legal_nature, "Simple")              ~ "Simple\nPartnership",
+      str_detect(legal_nature, "Silent")              ~ "Silent\nPartnership",
+      str_detect(legal_nature, "Corporation")         ~ "Corporation",
+      TRUE                                            ~ "Other"
+    )
+  )
+
+escape_rate <- micro_profile |>
+  group_by(legal_short, governance) |>
+  summarise(
+    n_total    = n(),
+    n_rich     = sum(is_capital_rich_micro),
+    escape_pct = n_rich / n_total,
+    .groups    = "drop"
+  ) |>
+  filter(n_total >= 20) |>
+  mutate(
+    combo_label = paste0(legal_short, " × ", str_replace(governance, "\\n", " "))
+  ) |>
+  arrange(desc(escape_pct))
+
+ggplot(
+  escape_rate,
+  aes(x = fct_reorder(combo_label, escape_pct),
+      y = escape_pct,
+      fill = governance)
+) +
+  geom_col(width = 0.7, alpha = 0.95) +
+  geom_text(aes(label = percent(escape_pct, accuracy = 0.1)),
+            hjust = -0.18, size = 3.3, colour = "grey20") +
+  geom_text(aes(label = paste0("n = ", comma(n_total)), y = 0.003),
+            hjust = 0, size = 2.8, colour = "white", fontface = "bold") +
+  coord_flip(clip = "off") +
+  scale_y_continuous(
+    labels = percent_format(),
+    limits = c(0, 0.58),
+    expand = expansion(mult = c(0, 0.05)),
+    name   = "Share of cell above the 75th capital percentile (BRL 500,000)"
+  ) +
+  scale_fill_manual(values = pal_gov, name = "Governance archetype",
+                    guide = guide_legend(reverse = TRUE)) +
+  labs(
+    title    = "The micro-enterprise escape profile is a partnership with a passive equity holder",
+    subtitle = "Share of capital-rich micros (>BRL 500k) by legal form × governance cell.\nCells with fewer than 20 firms excluded. Counts shown in white.",
+    x        = NULL,
+    caption  = caption_text
+  ) +
+  theme_cwc() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.text.y        = element_text(size = 10, colour = "grey20"),
+    plot.margin        = margin(10, 40, 10, 10)
+  )
+```
+
+Ranking the legal-form × governance cells that survive the n ≥ 20 cutoff:
+
+- **Simple Partnership × Beneficial Owner** (48.2%) — almost half of micros in this cell are
+  capital-rich.
+- **Simple Partnership × Managing Partner** (41.6%) — second highest.
+- Sole Proprietary × Sole Entrepreneur (34.3%), LLC × Managing Partner (29.0%), EIRELI ×
+  Beneficial Owner (24.1%) trail behind.
+
+The pattern is not about LLCs as a legal form — it is about **multi-party partnership
+structures**. The Simple Partnership requires two or more parties on paper; when a Beneficial
+Owner sits behind them, the cell's escape rate nearly doubles the base rate. This is the
+fingerprint of holding-company architecture operating through partnership law: a passive equity
+holder channelling capital into a nominally two-party vehicle whose revenue happens to sit below
+the Simples threshold.
+
+EIRELI (Brazil's individual limited liability form, created for single-person companies to
+separate personal from business liability) appears further down the list. The popular framing
+of "EIRELI as escape route" is not what the data show. The escape route is **partnership law
+plus passive ownership**.
+
+## Synthesis
+
+This extended analysis reframes the capital trap finding in three directions.
+
+**First**, capital concentration is *universal* across the Brazilian formal sector, not a
+micro-enterprise pathology. Gini coefficients above 0.98 in every size tier — and top-1% capital
+shares of 96–99% — mean that treating "micro-enterprise" as a uniquely unequal category misreads
+the structure. The same power-law sits behind every regulatory label.
+
+**Second**, governance does not deliver a single capital hierarchy. Managing Partners lead at
+the median and scale with firm size. Sole Entrepreneurs stay flat. Beneficial Owners are a
+heavy-tail archetype — most are small, a few are very large. Size and governance are orthogonal
+dimensions, but they interact differently depending on which moment of the distribution
+(median vs. tail) one cares about.
+
+**Third**, the capital-rich micro profile concentrates in **Simple Partnership structures under
+Beneficial Ownership** — a signature consistent with holding-company architecture rather than
+organic small-business growth. The policy implication is direct: if Brazil's development goal
+is to support genuinely capital-constrained entrepreneurs, the targeting instrument must
+incorporate legal form and governance alongside revenue thresholds. Revenue alone is porous —
+partnership law plus passive ownership is the channel through which capital-rich firms wear
+micro-enterprise clothing.
