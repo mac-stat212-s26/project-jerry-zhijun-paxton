@@ -52,6 +52,15 @@ Use the sidebar to navigate through our EDA, written analysis, and appendix mate
 
 > **TidyTuesday 2026 · Week 4 (Extended)** · February 2026
 
+## Presentation Video
+
+{{< video https://youtu.be/ztqXGVTrCgs aspect-ratio="16x9" >}}
+
+
+## Presentation Materials
+
+- [View final presentation slides](assets/slides/capital-without-category-final-slides.pdf)
+
 ## Team
 
 | Member | Name | Contribution |
